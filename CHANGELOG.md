@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-06-10] — Analytics: CAPM e reticoli binomiali (Ito/CRR)
+- Nuovo modulo `src/lib/quant.ts`: rendimenti log, allineamento serie per data, statistiche CAPM (β/α di Jensen via OLS su rendimenti giornalieri 1Y, R², Sharpe), Black-Scholes con normCdf Abramowitz-Stegun, pricing binomiale CRR (u=e^(σ√Δt), d=1/u, q risk-neutral) con esercizio europeo/americano e flag early exercise per nodo
+- Pannello CAPM (`F6`, `AAPL CAPM`): benchmark selezionabile (S&P 500, NASDAQ, FTSE MIB…), rf di default dal T-bill 13 settimane (^IRX), verdetto posizione vs SML
+- Pannello Option Valuation (`F7`, `AAPL OV`): reticolo binomiale disegnato in SVG fino a 8 step (prezzo sottostante + valore opzione per nodo, rosso se early exercise ottimale), prezzo a N=500 e Black-Scholes come riferimento di convergenza, delta; σ di default = volatilità storica 1Y, strike default ATM
+- Matematica verificata contro valori da manuale (Hull): BS call 6.8887 ✓, CRR→BS in convergenza, American put 2 step = 7.43 ✓, put-call parity a 1e-15
+- Decisione: tutta la matematica è client-side, nessuna nuova API route — riusa /api/history e /api/quote
+
 ## [2026-06-10] — MVP funzionante + pubblicazione GitHub
 - Implementato il terminale completo: command bar con suggestions, quote panel, grafico candlestick+volume (lightweight-charts v5), watchlist persistita in localStorage, news (CNBC+Yahoo RSS), monitor FX (Frankfurter/BCE), monitor crypto (CoinGecko), help, function keys F1–F5
 - 6 API route proxy: /api/quote, /api/history, /api/search, /api/news, /api/fx, /api/crypto

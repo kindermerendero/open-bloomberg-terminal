@@ -456,6 +456,121 @@ table.data td.dim {
   font-size: 11px;
 }
 
+/* ---------- quant panels (CAPM / OV) ---------- */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--amber);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.controls input,
+.controls select {
+  background: #0a0600;
+  border: 1px solid var(--border);
+  color: var(--yellow);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 5px;
+  width: 90px;
+  outline: none;
+}
+.controls input:focus,
+.controls select:focus {
+  border-color: var(--amber);
+}
+.controls .hint {
+  color: var(--text-dim);
+  font-size: 10px;
+  padding-bottom: 3px;
+}
+.controls .seg {
+  display: flex;
+}
+.controls .seg button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.controls .seg button.active {
+  background: var(--amber);
+  color: #000;
+}
+
+.stat-callout {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 10px 4px;
+}
+.stat-callout .k {
+  color: var(--amber);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.stat-callout .v {
+  color: var(--white);
+  font-size: 20px;
+  font-weight: 700;
+  text-shadow: 0 0 8px var(--amber-glow);
+}
+.ov-results {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+.ov-results .stat-callout .v {
+  font-size: 16px;
+}
+.verdict {
+  margin: 8px 10px;
+  padding: 4px 8px;
+  border: 1px solid var(--amber-dim);
+  color: var(--yellow);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.lattice-scroll {
+  overflow: auto;
+  border-top: 1px solid var(--border);
+}
+.lattice-svg .lat-s {
+  fill: var(--white);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+.lattice-svg .lat-v {
+  fill: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.lattice-svg .lat-v.ex {
+  fill: var(--down);
+  font-weight: 700;
+}
+.note {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
 /* ---------- function keys ---------- */
 .fkeys {
   display: flex;

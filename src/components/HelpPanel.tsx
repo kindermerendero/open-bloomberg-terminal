@@ -7,6 +7,11 @@ const SECURITY_CMDS: Array<[string, string]> = [
   ["<free text>", "Search — suggestions appear while typing"],
 ];
 
+const ANALYTICS_CMDS: Array<[string, string]> = [
+  ["<TICKER> CAPM | CAPM", "CAPM pricing: β, Jensen's α, R², E(R) vs a benchmark index"],
+  ["<TICKER> OV | OV", "Option valuation: CRR binomial lattice on the GBM/Ito process + Black-Scholes"],
+];
+
 const PANEL_CMDS: Array<[string, string]> = [
   ["N", "Full-screen news"],
   ["FX", "FX monitor (ECB reference rates)"],
@@ -26,6 +31,8 @@ const FKEYS: Array<[string, string]> = [
   ["F3", "FX monitor"],
   ["F4", "Crypto monitor"],
   ["F5", "News"],
+  ["F6", "CAPM analytics"],
+  ["F7", "Option valuation (binomial lattice)"],
 ];
 
 export default function HelpPanel() {
@@ -35,6 +42,13 @@ export default function HelpPanel() {
       <div className="panel-body help-body">
         <h3>Securities</h3>
         {SECURITY_CMDS.map(([cmd, desc]) => (
+          <div className="cmd-row" key={cmd}>
+            <span className="cmd">{cmd}</span>
+            <span className="desc">{desc}</span>
+          </div>
+        ))}
+        <h3>Analytics</h3>
+        {ANALYTICS_CMDS.map(([cmd, desc]) => (
           <div className="cmd-row" key={cmd}>
             <span className="cmd">{cmd}</span>
             <span className="desc">{desc}</span>

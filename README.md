@@ -13,7 +13,9 @@ An open-source, Bloomberg-style financial terminal that runs entirely on **free 
 - **News feed** — top stories and per-symbol headlines
 - **FX monitor** — ECB reference rates
 - **Crypto monitor** — top 20 by market cap
-- **Function keys** F1–F5 to switch panels, CRT-style amber-on-black aesthetic
+- **CAPM analytics** — β and Jensen's α estimated by OLS on 1Y daily returns vs a selectable benchmark, expected return via the Security Market Line, Sharpe ratio (`AAPL CAPM`)
+- **Option valuation** — Cox-Ross-Rubinstein binomial lattice (discretization of the GBM/Ito process), European & American exercise, SVG lattice visualization with early-exercise nodes highlighted, Black-Scholes convergence reference (`AAPL OV`)
+- **Function keys** F1–F7 to switch panels, CRT-style amber-on-black aesthetic
 
 ## Commands
 
@@ -22,8 +24,10 @@ An open-source, Bloomberg-style financial terminal that runs entirely on **free 
 | `AAPL`, `^GSPC`, `EURUSD=X`, `BTC-USD` | Load any Yahoo Finance symbol |
 | `1D 5D 1M 6M 1Y 5Y MAX` | Chart range |
 | `ADD <SYM>` / `DEL <SYM>` | Manage watchlist |
+| `<SYM> CAPM` / `CAPM` | CAPM pricing panel |
+| `<SYM> OV` / `OV` | Binomial-lattice option pricing |
 | `N` / `FX` / `CRY` / `SEC` / `HELP` | Switch panel |
-| `F1`–`F5` | Same, via function keys |
+| `F1`–`F7` | Same, via function keys |
 
 ## Data sources (all free, no keys)
 

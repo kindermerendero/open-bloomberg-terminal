@@ -10,8 +10,10 @@ import NewsPanel from "./NewsPanel";
 import FxPanel from "./FxPanel";
 import CryptoPanel from "./CryptoPanel";
 import HelpPanel from "./HelpPanel";
+import CapmPanel from "./CapmPanel";
+import LatticePanel from "./LatticePanel";
 
-type Mode = "SEC" | "FX" | "CRY" | "NEWS" | "HELP";
+type Mode = "SEC" | "FX" | "CRY" | "NEWS" | "HELP" | "CAPM" | "OV";
 
 const DEFAULT_WATCHLIST = [
   "AAPL",
@@ -245,9 +247,9 @@ export default function Terminal() {
   }, [mode, notify]);
 
   const loadSecurity = useCallback(
-    (sym: string) => {
+    (sym: string, target: Mode = "SEC") => {
       setSymbol(sym.toUpperCase());
-      setMode("SEC");
+      setMode(target);
       notify(`LOADING ${sym.toUpperCase()}…`);
     },
     [notify]
@@ -264,6 +266,10 @@ export default function Terminal() {
       if (cmd === "CRY" || cmd === "CRYPTO") return setMode("CRY");
       if (cmd === "N" || cmd === "NEWS") return setMode("NEWS");
       if (cmd === "SEC" || cmd === "Q") return setMode("SEC");
+      if (cmd === "CAPM" || cmd === "OV") {
+        if (!symbol) return notify("LOAD A SECURITY FIRST — e.g. AAPL CAPM", true);
+        return setMode(cmd as Mode);
+      }
 
       if (cmd in RANGE_CMDS) {
         setRange(RANGE_CMDS[cmd]);
@@ -283,9 +289,11 @@ export default function Terminal() {
         return notify(`${sym} REMOVED FROM WATCHLIST`);
       }
 
-      // "<TICKER> GP" / "<TICKER> DES" — Bloomberg-style function suffix
-      if (parts.length === 2 && ["GP", "DES"].includes(parts[1]) && TICKER_RE.test(parts[0])) {
-        return loadSecurity(parts[0]);
+      // "<TICKER> GP" / "<TICKER> CAPM" … — Bloomberg-style function suffix
+      if (parts.length === 2 && TICKER_RE.test(parts[0])) {
+        if (["GP", "DES"].includes(parts[1])) return loadSecurity(parts[0]);
+        if (parts[1] === "CAPM") return loadSecurity(parts[0], "CAPM");
+        if (parts[1] === "OV") return loadSecurity(parts[0], "OV");
       }
       if (parts.length === 1 && TICKER_RE.test(parts[0])) {
         return loadSecurity(parts[0]);
@@ -293,7 +301,7 @@ export default function Terminal() {
 
       notify(`UNKNOWN COMMAND: ${cmd} — TYPE HELP`, true);
     },
-    [loadSecurity, notify]
+    [loadSecurity, notify, symbol]
   );
 
   // ----- function keys -----
@@ -305,6 +313,8 @@ export default function Terminal() {
         F3: "FX",
         F4: "CRY",
         F5: "NEWS",
+        F6: "CAPM",
+        F7: "OV",
       };
       if (map[e.key]) {
         e.preventDefault();
@@ -321,6 +331,8 @@ export default function Terminal() {
     ["F3", "FX", "FX"],
     ["F4", "CRY", "CRYPTO"],
     ["F5", "NEWS", "NEWS"],
+    ["F6", "CAPM", "CAPM"],
+    ["F7", "OV", "OPTION VAL"],
   ];
 
   return (
@@ -365,6 +377,8 @@ export default function Terminal() {
             />
           )}
           {mode === "HELP" && <HelpPanel />}
+          {mode === "CAPM" && <CapmPanel symbol={symbol} quote={quote} />}
+          {mode === "OV" && <LatticePanel symbol={symbol} quote={quote} />}
         </div>
         <div className="col">
           <WatchlistPanel quotes={watchQuotes} loading={watchLoading} onSelect={loadSecurity} />

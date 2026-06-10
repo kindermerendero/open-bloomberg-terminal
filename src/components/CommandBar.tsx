@@ -9,7 +9,7 @@ interface Props {
   isError: boolean;
 }
 
-const KNOWN_COMMANDS = /^(HELP|FX|CRY|SEC|N|W|1D|5D|1M|6M|1Y|5Y|MAX|ADD\s|DEL\s)/i;
+const KNOWN_COMMANDS = /^(HELP|FX|CRY|SEC|N|W|CAPM|OV|1D|5D|1M|6M|1Y|5Y|MAX|ADD\s|DEL\s)/i;
 
 export default function CommandBar({ onCommand, message, isError }: Props) {
   const [value, setValue] = useState("");
