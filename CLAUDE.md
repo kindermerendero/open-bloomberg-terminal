@@ -28,4 +28,6 @@ Tutte le chiamate esterne passano dalle API route Next.js (`src/app/api/*`) per 
 
 ## Note operative
 - Gli endpoint Yahoo v7/quoteSummary richiedono crumb/cookie → NON usarli; usare solo `v8/finance/chart` (meta + OHLCV) e `v1/finance/search`
+- **Yahoo 429**: usare SOLO header minimali (`User-Agent: Mozilla/5.0`, `Accept: */*`) — UA browser completi vengono rifiutati perché il fingerprint TLS di Node non corrisponde. Fallback host query2→query1 in `src/lib/yahoo.ts` (yahooFetch)
 - CoinGecko free tier: ~30 req/min → cache lato server 60s
+- Repo GitHub: https://github.com/kindermerendero/open-bloomberg-terminal (pubblico, MIT)
