@@ -12,8 +12,10 @@ import CryptoPanel from "./CryptoPanel";
 import HelpPanel from "./HelpPanel";
 import CapmPanel from "./CapmPanel";
 import LatticePanel from "./LatticePanel";
+import MarkowitzPanel from "./MarkowitzPanel";
+import BondPanel from "./BondPanel";
 
-type Mode = "SEC" | "FX" | "CRY" | "NEWS" | "HELP" | "CAPM" | "OV";
+type Mode = "SEC" | "FX" | "CRY" | "NEWS" | "HELP" | "CAPM" | "OV" | "MKWZ" | "BOND";
 
 const DEFAULT_WATCHLIST = [
   "AAPL",
@@ -41,6 +43,7 @@ const RANGE_CMDS: Record<string, ChartRange> = {
 export default function Terminal() {
   const [mode, setMode] = useState<Mode>("SEC");
   const [symbol, setSymbol] = useState<string | null>("AAPL");
+  const [portfolio, setPortfolio] = useState<string[]>([]);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [candles, setCandles] = useState<Candle[]>([]);
   const [range, setRange] = useState<ChartRange>("6mo");
@@ -266,9 +269,23 @@ export default function Terminal() {
       if (cmd === "CRY" || cmd === "CRYPTO") return setMode("CRY");
       if (cmd === "N" || cmd === "NEWS") return setMode("NEWS");
       if (cmd === "SEC" || cmd === "Q") return setMode("SEC");
+      if (cmd === "BOND" || cmd === "YC" || cmd === "GOVT") return setMode("BOND");
       if (cmd === "CAPM" || cmd === "OV") {
         if (!symbol) return notify("LOAD A SECURITY FIRST — e.g. AAPL CAPM", true);
         return setMode(cmd as Mode);
+      }
+
+      // MKWZ AAPL,MSFT,NVDA — mean-variance frontier over a portfolio
+      if (parts[0] === "MKWZ" || parts[0] === "PORT") {
+        const list = cmd.slice(parts[0].length).replace(/\s+/g, "");
+        const syms = list.split(",").filter((s) => TICKER_RE.test(s));
+        if (syms.length >= 2) {
+          setPortfolio(syms);
+          setMode("MKWZ");
+          return notify(`PORTFOLIO: ${syms.join(", ")}`);
+        }
+        if (portfolio.length >= 2) return setMode("MKWZ");
+        return notify("MKWZ NEEDS ≥2 TICKERS — e.g. MKWZ AAPL,MSFT,NVDA,JPM", true);
       }
 
       if (cmd in RANGE_CMDS) {
@@ -315,6 +332,8 @@ export default function Terminal() {
         F5: "NEWS",
         F6: "CAPM",
         F7: "OV",
+        F8: "MKWZ",
+        F9: "BOND",
       };
       if (map[e.key]) {
         e.preventDefault();
@@ -333,6 +352,8 @@ export default function Terminal() {
     ["F5", "NEWS", "NEWS"],
     ["F6", "CAPM", "CAPM"],
     ["F7", "OV", "OPTION VAL"],
+    ["F8", "MKWZ", "MARKOWITZ"],
+    ["F9", "BOND", "FIXED INC"],
   ];
 
   return (
@@ -379,6 +400,8 @@ export default function Terminal() {
           {mode === "HELP" && <HelpPanel />}
           {mode === "CAPM" && <CapmPanel symbol={symbol} quote={quote} />}
           {mode === "OV" && <LatticePanel symbol={symbol} quote={quote} />}
+          {mode === "MKWZ" && <MarkowitzPanel symbols={portfolio} />}
+          {mode === "BOND" && <BondPanel />}
         </div>
         <div className="col">
           <WatchlistPanel quotes={watchQuotes} loading={watchLoading} onSelect={loadSecurity} />

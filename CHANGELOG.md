@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-06-17] — Markowitz (frontiera) + Fixed Income (struttura a termine)
+- **Markowitz** (`F8`, `MKWZ AAPL,MSFT,NVDA,…`): ottimizzazione media-varianza in forma chiusa (Merton 1972), short consentito (Σwᵢ=1, nessun vincolo di segno). Calcola A/B/C/D da Σ⁻¹, GMV, tangency portfolio (max Sharpe), CML. Scatter σ-μ in SVG con: frontiera efficiente (iperbole), zona di fattibilità come nuvola Monte Carlo di portafogli random, GMV, tangency, retta CML da (0,rf). Titoli singoli colorati per **classe di rischio β** (LOW <0.8 / MID / HIGH >1.2) vs benchmark selezionabile. Tabella pesi GMV/tangency per titolo
+- **Fixed Income** (`F9`, `BOND`/`YC`): struttura a termine Treasury USA completa (1Mo–30Yr) da Treasury.gov (CSV pubblico, no key), nuova route `/api/treasury` con parsing CSV + fallback anno precedente a inizio gennaio. Yield curve in SVG (scala log su maturity), spread 10Y–2Y e forma curva (NORMAL/FLAT/INVERTED). Calcolatore bond: prezzo↔YTM (bisezione), duration Macaulay/modified, convexity, current yield
+- Nuova matematica in `src/lib/quant.ts`: `alignMany` (allineamento N serie su date comuni), `invertMatrix` (Gauss-Jordan con pivoting), `markowitz`, `bondPrice`/`bondYTM`/`bondAnalytics`
+- Verifica numerica: par bond=100, 10Y 4%@4% Macaulay 8.34/mod 8.18, zero-coupon Macaulay≈scadenza, GMV 2-asset combacia con formula analitica, GMV vol < min(σ singoli)
+- Decisione: tutta la matematica è client-side; unica nuova API route è `/api/treasury` (le serie azionarie riusano `/api/history`)
+
 ## [2026-06-17] — Config deploy Vercel
 - Aggiunto `vercel.json`: region `fra1` (Francoforte, vicina a endpoint EU e bassa latenza), `maxDuration: 30s` sulle API route per assorbire la lentezza di Yahoo/RSS e il fallback host `query2→query1` senza timeout (default 10s troppo stretto sui cold start)
 - Deploy zero-config: nessuna API key né variabile d'ambiente richiesta

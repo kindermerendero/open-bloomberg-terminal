@@ -10,6 +10,8 @@ const SECURITY_CMDS: Array<[string, string]> = [
 const ANALYTICS_CMDS: Array<[string, string]> = [
   ["<TICKER> CAPM | CAPM", "CAPM pricing: β, Jensen's α, R², E(R) vs a benchmark index"],
   ["<TICKER> OV | OV", "Option valuation: CRR binomial lattice on the GBM/Ito process + Black-Scholes"],
+  ["MKWZ <T1,T2,T3…>", "Markowitz frontier: feasible region, GMV, tangency, CML, β risk classes"],
+  ["BOND | YC", "US Treasury term structure + bond calculator (price/YTM, duration, convexity)"],
 ];
 
 const PANEL_CMDS: Array<[string, string]> = [
@@ -33,6 +35,8 @@ const FKEYS: Array<[string, string]> = [
   ["F5", "News"],
   ["F6", "CAPM analytics"],
   ["F7", "Option valuation (binomial lattice)"],
+  ["F8", "Markowitz frontier"],
+  ["F9", "Fixed income / term structure"],
 ];
 
 export default function HelpPanel() {

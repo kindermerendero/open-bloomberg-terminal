@@ -641,3 +641,99 @@ table.data td.dim {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ---- Markowitz panel ---- */
+.mkwz-grid {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 12px;
+  padding: 10px;
+}
+.mkwz-svg {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  background: #030200;
+}
+.mkwz-axis {
+  fill: var(--text-dim);
+  font-size: 10px;
+}
+.mkwz-tick {
+  fill: var(--text);
+  font-size: 9px;
+}
+.mkwz-lbl {
+  fill: var(--white);
+  font-size: 10px;
+  font-weight: 600;
+}
+.mkwz-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mkwz-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.mkwz-legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.mkwz-table {
+  width: calc(100% - 20px);
+  margin: 0 10px 8px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.mkwz-table th {
+  text-align: right;
+  color: var(--amber);
+  border-bottom: 1px solid var(--border);
+  padding: 3px 8px;
+}
+.mkwz-table th:first-child {
+  text-align: left;
+}
+.mkwz-table td {
+  text-align: right;
+  color: var(--text);
+  padding: 3px 8px;
+  border-bottom: 1px solid #1a1200;
+}
+.mkwz-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+}
+
+/* ---- Bond / term-structure panel ---- */
+.bond-svg {
+  width: calc(100% - 20px);
+  height: auto;
+  margin: 6px 10px;
+  border: 1px solid var(--border);
+  background: #030200;
+}
+.bond-curvehdr {
+  display: flex;
+  gap: 24px;
+  padding: 8px 10px 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.bond-curvehdr b {
+  color: var(--white);
+}
+.bond-curvehdr b.up {
+  color: var(--up);
+}
+.bond-curvehdr b.down {
+  color: var(--down);
+}
