@@ -31,3 +31,7 @@ Tutte le chiamate esterne passano dalle API route Next.js (`src/app/api/*`) per 
 - **Yahoo 429**: usare SOLO header minimali (`User-Agent: Mozilla/5.0`, `Accept: */*`) — UA browser completi vengono rifiutati perché il fingerprint TLS di Node non corrisponde. Fallback host query2→query1 in `src/lib/yahoo.ts` (yahooFetch)
 - CoinGecko free tier: ~30 req/min → cache lato server 60s
 - Repo GitHub: https://github.com/kindermerendero/open-bloomberg-terminal (pubblico, MIT)
+
+## Deploy
+- **Vercel** (piattaforma naturale, Next.js 15 App Router): deploy zero-config, nessuna API key/env. `vercel.json` imposta region `fra1` e `maxDuration: 30s` sulle API route. Produzione: https://open-bloomberg-terminal.vercel.app — deploy via `vercel --prod`
+- Attenzione: gli IP datacenter di Vercel sono più esposti ai 429 di Yahoo che l'IP residenziale locale → verificare in produzione colpendo `/api/quote?symbol=AAPL` ripetutamente. Se i 429 diventano sistematici, valutare proxy/cache più aggressiva (Vercel KV)
