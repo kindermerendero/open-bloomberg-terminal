@@ -14,8 +14,27 @@ import CapmPanel from "./CapmPanel";
 import LatticePanel from "./LatticePanel";
 import MarkowitzPanel from "./MarkowitzPanel";
 import BondPanel from "./BondPanel";
+import EquityValuationPanel from "./EquityValuationPanel";
+import MnaPanel from "./MnaPanel";
+import RightsIssuePanel from "./RightsIssuePanel";
+import IpoPanel from "./IpoPanel";
+import OpaPanel from "./OpaPanel";
 
-type Mode = "SEC" | "FX" | "CRY" | "NEWS" | "HELP" | "CAPM" | "OV" | "MKWZ" | "BOND";
+type Mode =
+  | "SEC"
+  | "FX"
+  | "CRY"
+  | "NEWS"
+  | "HELP"
+  | "CAPM"
+  | "OV"
+  | "MKWZ"
+  | "BOND"
+  | "EQV"
+  | "MNA"
+  | "RGT"
+  | "IPO"
+  | "OPA";
 
 const DEFAULT_WATCHLIST = [
   "AAPL",
@@ -270,9 +289,13 @@ export default function Terminal() {
       if (cmd === "N" || cmd === "NEWS") return setMode("NEWS");
       if (cmd === "SEC" || cmd === "Q") return setMode("SEC");
       if (cmd === "BOND" || cmd === "YC" || cmd === "GOVT") return setMode("BOND");
-      if (cmd === "CAPM" || cmd === "OV") {
-        if (!symbol) return notify("LOAD A SECURITY FIRST — e.g. AAPL CAPM", true);
-        return setMode(cmd as Mode);
+      if (cmd === "MNA" || cmd === "MA" || cmd === "MERGER") return setMode("MNA");
+      if (cmd === "RGT" || cmd === "RIGHTS" || cmd === "BUYBACK") return setMode("RGT");
+      if (cmd === "IPO") return setMode("IPO");
+      if (cmd === "OPA" || cmd === "TENDER") return setMode("OPA");
+      if (cmd === "CAPM" || cmd === "OV" || cmd === "EQV" || cmd === "DDM") {
+        if (!symbol) return notify(`LOAD A SECURITY FIRST — e.g. AAPL ${cmd}`, true);
+        return setMode(cmd === "DDM" ? "EQV" : (cmd as Mode));
       }
 
       // MKWZ AAPL,MSFT,NVDA — mean-variance frontier over a portfolio
@@ -311,6 +334,7 @@ export default function Terminal() {
         if (["GP", "DES"].includes(parts[1])) return loadSecurity(parts[0]);
         if (parts[1] === "CAPM") return loadSecurity(parts[0], "CAPM");
         if (parts[1] === "OV") return loadSecurity(parts[0], "OV");
+        if (parts[1] === "EQV" || parts[1] === "DDM") return loadSecurity(parts[0], "EQV");
       }
       if (parts.length === 1 && TICKER_RE.test(parts[0])) {
         return loadSecurity(parts[0]);
@@ -334,6 +358,7 @@ export default function Terminal() {
         F7: "OV",
         F8: "MKWZ",
         F9: "BOND",
+        F10: "EQV",
       };
       if (map[e.key]) {
         e.preventDefault();
@@ -354,6 +379,11 @@ export default function Terminal() {
     ["F7", "OV", "OPTION VAL"],
     ["F8", "MKWZ", "MARKOWITZ"],
     ["F9", "BOND", "FIXED INC"],
+    ["F10", "EQV", "EQUITY VAL"],
+    ["MNA", "MNA", "M&A"],
+    ["RGT", "RGT", "RIGHTS"],
+    ["IPO", "IPO", "IPO"],
+    ["OPA", "OPA", "TENDER"],
   ];
 
   return (
@@ -402,6 +432,11 @@ export default function Terminal() {
           {mode === "OV" && <LatticePanel symbol={symbol} quote={quote} />}
           {mode === "MKWZ" && <MarkowitzPanel symbols={portfolio} />}
           {mode === "BOND" && <BondPanel />}
+          {mode === "EQV" && <EquityValuationPanel symbol={symbol} quote={quote} />}
+          {mode === "MNA" && <MnaPanel />}
+          {mode === "RGT" && <RightsIssuePanel />}
+          {mode === "IPO" && <IpoPanel />}
+          {mode === "OPA" && <OpaPanel />}
         </div>
         <div className="col">
           <WatchlistPanel quotes={watchQuotes} loading={watchLoading} onSelect={loadSecurity} />

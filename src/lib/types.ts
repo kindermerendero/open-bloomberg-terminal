@@ -59,3 +59,21 @@ export interface SearchResult {
 }
 
 export type ChartRange = "1d" | "5d" | "1mo" | "6mo" | "1y" | "5y" | "max";
+
+export interface Fundamentals {
+  symbol: string;
+  source: "SEC" | "none"; // SEC EDGAR (US filers) or no fundamentals available
+  price: number | null;
+  // from SEC EDGAR (latest fiscal year), null when unavailable
+  eps: number | null; // diluted EPS
+  bvps: number | null; // book value per share
+  roe: number | null; // net income / stockholders' equity
+  payoutRatio: number | null; // declared DPS / EPS
+  netIncome: number | null;
+  equity: number | null;
+  sharesOut: number | null;
+  fiscalYearEnd: string | null;
+  // dividends from Yahoo (works for any market)
+  dividendTTM: number | null; // trailing 12-month dividends per share
+  dividendYield: number | null; // dividendTTM / price (decimal)
+}

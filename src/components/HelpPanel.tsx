@@ -14,6 +14,14 @@ const ANALYTICS_CMDS: Array<[string, string]> = [
   ["BOND | YC", "US Treasury term structure + bond calculator (price/YTM, duration, convexity)"],
 ];
 
+const CORPFIN_CMDS: Array<[string, string]> = [
+  ["<TICKER> EQV | EQV", "Equity valuation: DDM (Gordon + 2-stage), PVGO, P/E, P/BV, div yield"],
+  ["MNA", "M&A: synergies = VA(AB)−ΣVA, premium, VAN = synergies − premium"],
+  ["RGT | RIGHTS", "Rights issue (ex-rights price, right value, AIAF factor) + buyback"],
+  ["IPO", "IPO: bookbuilding, underpricing, money left on table, greenshoe, costs"],
+  ["OPA | TENDER", "Tender offer: 30% mandatory / 90% squeeze-out, premium, defenses"],
+];
+
 const PANEL_CMDS: Array<[string, string]> = [
   ["N", "Full-screen news"],
   ["FX", "FX monitor (ECB reference rates)"],
@@ -37,6 +45,7 @@ const FKEYS: Array<[string, string]> = [
   ["F7", "Option valuation (binomial lattice)"],
   ["F8", "Markowitz frontier"],
   ["F9", "Fixed income / term structure"],
+  ["F10", "Equity valuation (DDM / PVGO)"],
 ];
 
 export default function HelpPanel() {
@@ -53,6 +62,13 @@ export default function HelpPanel() {
         ))}
         <h3>Analytics</h3>
         {ANALYTICS_CMDS.map(([cmd, desc]) => (
+          <div className="cmd-row" key={cmd}>
+            <span className="cmd">{cmd}</span>
+            <span className="desc">{desc}</span>
+          </div>
+        ))}
+        <h3>Corporate Finance</h3>
+        {CORPFIN_CMDS.map(([cmd, desc]) => (
           <div className="cmd-row" key={cmd}>
             <span className="cmd">{cmd}</span>
             <span className="desc">{desc}</span>

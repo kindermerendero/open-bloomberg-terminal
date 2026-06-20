@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026-06-20] — Modulo corporate finance (Barchiesi): EQV, MNA, RGT, IPO, OPA
+- Aggiunto l'intero modulo **finanza aziendale** per coprire la parte del corso "Analisi dei Sistemi Finanziari" della prof.ssa Barchiesi (il terminale copriva finora solo il modulo Tiburzi/scienza degli investimenti)
+- **EQV** (`F10`, `AAPL EQV`/`DDM`) — equity valuation data-driven: DDM Gordon `P0=D1/(r−g)`, DDM a due stadi (g₁ per N anni → g₂ terminale Gordon, con tabella dividendi proiettati e TV), **PVGO = P − EPS/r**, multipli P/E, P/BV, dividend yield. Auto-fill: D₀/EPS/BVPS/ROE/payout da SEC EDGAR, costo del capitale r dal **CAPM** (β vs S&P500, rf da ^IRX) → collega il modulo Tiburzi a quello Barchiesi. Tutti gli input restano editabili
+- **MNA** (`MNA`) — M&A: sinergie `=VA(AB)−[VA(A)+VA(B)]`, premio, costo, **VAN acquisizione = sinergie − premio**, tipologie orizzontale/verticale/conglomerale
+- **RGT** (`RGT`/`RIGHTS`) — aumento di capitale a pagamento: prezzo teorico ex-diritto `P_to=(n·P_cum+m·P_e)/(n+m)`, valore del diritto, **fattore AIAF** `K=P_to/P_cum`, diluizione; + sezione buyback (azioni riacquistate, % capitale vs limite 20%, accrescimento EPS)
+- **IPO** (`IPO`) — bookbuilding, underpricing, money left on the table, greenshoe, spread+costi all-in, requisiti float EXM/STAR, tipi OPS/OPV/OPVS
+- **OPA** (`OPA`/`TENDER`) — tender offer: premio, soglia obbligatoria 30% (CONSOB), squeeze-out 90%, equal opportunity, difese (amichevole vs ostile)
+- Nuova route **`/api/fundamentals`**: dividendi TTM da Yahoo (`v8/finance/chart?events=div`, qualsiasi mercato) + fundamentals USA da SEC EDGAR XBRL (companyfacts, ticker→CIK via `company_tickers.json`, no API key). Ticker non-USA → `source:none` con soli dividendi
+- Nuova matematica in `src/lib/quant.ts`: `ddmGordon`, `ddmTwoStage`, `sustainableGrowth`, `impliedCostOfEquity`, `pvgo`, `mnaEval`, `rightsIssue`
+- Verifica live: AAPL → SEC (EPS 7.46, ROE 105% reale da equity erosa dai buyback → growth clampata), ENEL.MI → dividendi Yahoo (yield 4.88%). Build e tsc puliti
+- Decisione: l'unica nuova API route è `/api/fundamentals`; il resto è matematica client-side che riusa `/api/history` e `/api/quote`. SEC EDGAR è la sola fonte fundamentals coerente con l'ethos no-key (US-only, fallback manuale per gli altri)
+
 ## [2026-06-17] — Markowitz (frontiera) + Fixed Income (struttura a termine)
 - **Markowitz** (`F8`, `MKWZ AAPL,MSFT,NVDA,…`): ottimizzazione media-varianza in forma chiusa (Merton 1972), short consentito (Σwᵢ=1, nessun vincolo di segno). Calcola A/B/C/D da Σ⁻¹, GMV, tangency portfolio (max Sharpe), CML. Scatter σ-μ in SVG con: frontiera efficiente (iperbole), zona di fattibilità come nuvola Monte Carlo di portafogli random, GMV, tangency, retta CML da (0,rf). Titoli singoli colorati per **classe di rischio β** (LOW <0.8 / MID / HIGH >1.2) vs benchmark selezionabile. Tabella pesi GMV/tangency per titolo
 - **Fixed Income** (`F9`, `BOND`/`YC`): struttura a termine Treasury USA completa (1Mo–30Yr) da Treasury.gov (CSV pubblico, no key), nuova route `/api/treasury` con parsing CSV + fallback anno precedente a inizio gennaio. Yield curve in SVG (scala log su maturity), spread 10Y–2Y e forma curva (NORMAL/FLAT/INVERTED). Calcolatore bond: prezzo↔YTM (bisezione), duration Macaulay/modified, convexity, current yield

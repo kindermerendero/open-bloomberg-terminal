@@ -1,0 +1,260 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { Candle, Fundamentals, Quote } from "@/lib/types";
+import {
+  capmStats,
+  ddmGordon,
+  ddmTwoStage,
+  pvgo,
+  sustainableGrowth,
+} from "@/lib/quant";
+import { fmtNum, fmtPct, signClass } from "@/lib/format";
+
+interface Props {
+  symbol: string | null;
+  quote: Quote | null;
+}
+
+// clamp auto-detected growth into a sane band so a noisy ROE doesn't blow up Gordon
+const clampG = (g: number) => Math.max(-5, Math.min(g, 12));
+
+export default function EquityValuationPanel({ symbol, quote }: Props) {
+  const [fund, setFund] = useState<Fundamentals | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // editable model inputs (percent units in the UI)
+  const [rPct, setRPct] = useState(9); // cost of equity
+  const [d0, setD0] = useState(0); // last paid dividend / share
+  const [g1Pct, setG1Pct] = useState(8); // high-growth stage
+  const [g2Pct, setG2Pct] = useState(2.5); // terminal growth
+  const [years, setYears] = useState(5);
+  const [eps, setEps] = useState(0);
+  const [bvps, setBvps] = useState(0);
+
+  const price = quote?.price ?? fund?.price ?? null;
+
+  // load fundamentals + derive cost of equity from CAPM (reuses the Tiburzi module)
+  useEffect(() => {
+    if (!symbol) return;
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    (async () => {
+      try {
+        const [fRes, aRes, bRes, rfRes] = await Promise.all([
+          fetch(`/api/fundamentals?symbol=${encodeURIComponent(symbol)}`),
+          fetch(`/api/history?symbol=${encodeURIComponent(symbol)}&range=1y`),
+          fetch(`/api/history?symbol=%5EGSPC&range=1y`),
+          fetch(`/api/quote?symbols=%5EIRX`),
+        ]);
+        const f: Fundamentals = await fRes.json();
+        if (cancelled) return;
+        if (!fRes.ok) throw new Error((f as unknown as { error?: string }).error ?? "load failed");
+        setFund(f);
+
+        if (f.dividendTTM != null) setD0(Number(f.dividendTTM.toFixed(4)));
+        if (f.eps != null) setEps(Number(f.eps.toFixed(2)));
+        if (f.bvps != null) setBvps(Number(f.bvps.toFixed(2)));
+        if (f.payoutRatio != null && f.roe != null) {
+          const g = clampG(sustainableGrowth(f.payoutRatio, f.roe) * 100);
+          setG1Pct(Number(g.toFixed(2)));
+          setG2Pct(Number(Math.min(g, 3).toFixed(2)));
+        }
+
+        // cost of equity from CAPM β vs S&P 500, rf = 13W T-bill
+        try {
+          const asset = await aRes.json();
+          const bench = await bRes.json();
+          const rf = (await rfRes.json())?.quotes?.[0]?.price ?? 4;
+          const s = capmStats(asset.candles as Candle[], bench.candles as Candle[], rf / 100);
+          if (s && Number.isFinite(s.erCapm)) setRPct(Number((s.erCapm * 100).toFixed(2)));
+        } catch {
+          /* keep manual cost of equity */
+        }
+      } catch (e) {
+        if (!cancelled) setError((e as Error).message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [symbol]);
+
+  if (!symbol) {
+    return (
+      <div className="panel" style={{ flex: "1 1 auto" }}>
+        <div className="panel-title">EQV — Equity Valuation</div>
+        <div className="empty">Load a security first — e.g. AAPL EQV</div>
+      </div>
+    );
+  }
+
+  const r = rPct / 100;
+  const g1 = g1Pct / 100;
+  const g2 = g2Pct / 100;
+  const div1 = d0 * (1 + g1);
+  const gordon = ddmGordon(div1, r, g1);
+  const twoStage = ddmTwoStage(d0, r, g1, g2, years);
+  const pv = price != null && eps > 0 ? pvgo(price, eps, r) : null;
+  const noGrowth = eps > 0 ? eps / r : null;
+
+  const pe = price != null && eps > 0 ? price / eps : null;
+  const pbv = price != null && bvps > 0 ? price / bvps : null;
+  const divYield = price != null && d0 > 0 ? d0 / price : null;
+
+  const fair = twoStage.price ?? gordon;
+  const gap = fair != null && price != null ? (fair - price) / price : null;
+  const verdict =
+    gap == null
+      ? "PROVIDE A DIVIDEND > 0 TO RUN THE DDM"
+      : gap > 0.1
+        ? `UNDERVALUED — DDM FAIR VALUE ${fmtPct(gap * 100)} ABOVE MARKET`
+        : gap < -0.1
+          ? `OVERVALUED — DDM FAIR VALUE ${fmtPct(gap * 100)} VS MARKET`
+          : "FAIRLY PRICED — DDM WITHIN ±10% OF MARKET";
+
+  return (
+    <div className="panel" style={{ flex: "1 1 auto" }}>
+      <div className="panel-title">
+        EQV — {symbol} {price != null ? `@ ${fmtNum(price)}` : ""}
+        <span className="sub">
+          {fund?.source === "SEC" ? `SEC EDGAR · FY ${fund.fiscalYearEnd ?? "—"}` : "MANUAL INPUTS"}
+        </span>
+      </div>
+
+      <div className="controls">
+        <label>
+          COST OF EQ % (r)
+          <input type="number" step="0.1" value={rPct} onChange={(e) => setRPct(parseFloat(e.target.value) || 0)} />
+        </label>
+        <label>
+          DIV / SHARE (D₀)
+          <input type="number" step="0.01" value={d0} onChange={(e) => setD0(parseFloat(e.target.value) || 0)} />
+        </label>
+        <label>
+          GROWTH g₁ %
+          <input type="number" step="0.1" value={g1Pct} onChange={(e) => setG1Pct(parseFloat(e.target.value) || 0)} />
+        </label>
+        <label>
+          TERMINAL g₂ %
+          <input type="number" step="0.1" value={g2Pct} onChange={(e) => setG2Pct(parseFloat(e.target.value) || 0)} />
+        </label>
+        <label>
+          STAGE-1 YEARS
+          <input type="number" step="1" min={1} max={20} value={years} onChange={(e) => setYears(parseInt(e.target.value) || 1)} />
+        </label>
+        <label>
+          EPS
+          <input type="number" step="0.01" value={eps} onChange={(e) => setEps(parseFloat(e.target.value) || 0)} />
+        </label>
+        <label>
+          BVPS
+          <input type="number" step="0.01" value={bvps} onChange={(e) => setBvps(parseFloat(e.target.value) || 0)} />
+        </label>
+        <span className="hint">r auto = CAPM β·(E[Rm]−rf)+rf · g₁ auto = (1−payout)·ROE</span>
+      </div>
+
+      <div className="panel-body">
+        {loading && <div className="loading">LOADING FUNDAMENTALS…</div>}
+        {error && <div className="empty">ERR: {error}</div>}
+        {!loading && (
+          <>
+            <div className="stat-callout">
+              <span className="k">DDM FAIR VALUE (2-stage) vs MARKET {price != null ? fmtNum(price) : "—"}</span>
+              <span className={`v ${gap == null ? "flat" : signClass(gap)}`}>
+                {fair != null ? fmtNum(fair) : "—"}
+              </span>
+            </div>
+
+            <div className="quote-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+              <div className="cell">
+                <span className="k">GORDON P₀ = D₁/(r−g)</span>
+                <span className="v">{gordon != null ? fmtNum(gordon) : "r ≤ g"}</span>
+              </div>
+              <div className="cell">
+                <span className="k">2-STAGE P₀</span>
+                <span className="v">{twoStage.price != null ? fmtNum(twoStage.price) : "r ≤ g₂"}</span>
+              </div>
+              <div className="cell">
+                <span className="k">NEXT DIV (D₁)</span>
+                <span className="v">{fmtNum(div1)}</span>
+              </div>
+              <div className="cell">
+                <span className="k">PV STAGE-1 DIVS</span>
+                <span className="v">{fmtNum(twoStage.pvHigh)}</span>
+              </div>
+              <div className="cell">
+                <span className="k">PV TERMINAL</span>
+                <span className="v">{fmtNum(twoStage.pvTerminal)}</span>
+              </div>
+              <div className="cell">
+                <span className="k">PVGO = P − EPS/r</span>
+                <span className={`v ${pv == null ? "flat" : signClass(pv)}`}>{pv != null ? fmtNum(pv) : "—"}</span>
+              </div>
+              <div className="cell">
+                <span className="k">NO-GROWTH VALUE EPS/r</span>
+                <span className="v">{noGrowth != null ? fmtNum(noGrowth) : "—"}</span>
+              </div>
+              <div className="cell">
+                <span className="k">P / E</span>
+                <span className="v">{pe != null ? fmtNum(pe) : "—"}</span>
+              </div>
+              <div className="cell">
+                <span className="k">P / BV</span>
+                <span className="v">{pbv != null ? fmtNum(pbv) : "—"}</span>
+              </div>
+              <div className="cell">
+                <span className="k">DIVIDEND YIELD</span>
+                <span className="v">{divYield != null ? fmtPct(divYield * 100) : "—"}</span>
+              </div>
+              <div className="cell">
+                <span className="k">ROE (SEC)</span>
+                <span className="v">{fund?.roe != null ? fmtPct(fund.roe * 100) : "—"}</span>
+              </div>
+              <div className="cell">
+                <span className="k">PAYOUT (SEC)</span>
+                <span className="v">{fund?.payoutRatio != null ? fmtPct(fund.payoutRatio * 100) : "—"}</span>
+              </div>
+            </div>
+
+            {twoStage.dividends.length > 0 && (
+              <table className="data">
+                <thead>
+                  <tr>
+                    <th>YEAR</th>
+                    {twoStage.dividends.map((_, i) => (
+                      <th key={i}>{i + 1}</th>
+                    ))}
+                    <th>TV@N</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="sym">DIV</td>
+                    {twoStage.dividends.map((d, i) => (
+                      <td key={i}>{fmtNum(d)}</td>
+                    ))}
+                    <td>{fmtNum(twoStage.terminalValue)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
+
+            <div className="verdict">{verdict}</div>
+            <p className="note" style={{ padding: "0 10px 10px" }}>
+              DDM Gordon: P₀ = D₁/(r−g). Two-stage: dividends grow at g₁ for N years then at g₂ forever
+              (Gordon terminal value discounted back). PVGO = P − EPS/r isolates the value of growth
+              opportunities; a high P/E driven by PVGO signals a growth stock. r is the CAPM cost of
+              equity; g₁ defaults to sustainable growth (1−payout)·ROE. Fundamentals: SEC EDGAR (US
+              filers, latest 10-K); dividends: Yahoo (TTM). All inputs editable.
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -498,3 +498,107 @@ export function bondAnalytics(
     currentYield: (face * couponRate) / price,
   };
 }
+
+// =====================================================================
+// CORPORATE FINANCE (modulo Barchiesi) — equity valuation & operazioni
+// =====================================================================
+
+// ---------- Dividend Discount Model ----------
+
+// Gordon constant-growth DDM: P0 = D1 / (r - g). Defined only for r > g.
+export function ddmGordon(div1: number, r: number, g: number): number | null {
+  if (r <= g) return null;
+  return div1 / (r - g);
+}
+
+// sustainable (internal) growth from fundamentals: g = retention · ROE = (1 - payout)·ROE
+export function sustainableGrowth(payout: number, roe: number): number {
+  return (1 - payout) * roe;
+}
+
+// cost of equity implied by the Gordon model: r = D1/P0 + g
+export function impliedCostOfEquity(div1: number, price: number, g: number): number | null {
+  if (price <= 0) return null;
+  return div1 / price + g;
+}
+
+export interface TwoStageResult {
+  price: number | null;
+  pvHigh: number; // PV of the explicit high-growth dividends
+  pvTerminal: number; // PV of the terminal (Gordon) value
+  terminalValue: number; // terminal value at year N
+  dividends: number[]; // projected D1..DN
+}
+
+// Two-stage DDM: dividends grow at g1 for `years`, then at g2 forever.
+// d0 = last paid dividend, r = cost of equity.
+export function ddmTwoStage(
+  d0: number,
+  r: number,
+  g1: number,
+  g2: number,
+  years: number
+): TwoStageResult {
+  const dividends: number[] = [];
+  let pvHigh = 0;
+  let d = d0;
+  for (let t = 1; t <= years; t++) {
+    d = d * (1 + g1);
+    dividends.push(d);
+    pvHigh += d / Math.pow(1 + r, t);
+  }
+  let terminalValue = 0;
+  let pvTerminal = 0;
+  let price: number | null = null;
+  if (r > g2) {
+    const dNext = d * (1 + g2); // first stable dividend (year N+1)
+    terminalValue = dNext / (r - g2); // Gordon value at year N
+    pvTerminal = terminalValue / Math.pow(1 + r, years);
+    price = pvHigh + pvTerminal;
+  }
+  return { price, pvHigh, pvTerminal, terminalValue, dividends };
+}
+
+// Present value of growth opportunities: PVGO = P0 - EPS1/r (no-growth value = EPS/r)
+export function pvgo(price: number, eps: number, r: number): number | null {
+  if (r <= 0) return null;
+  return price - eps / r;
+}
+
+// ---------- M&A ----------
+
+export interface MnaResult {
+  combinedStandalone: number; // VA(A) + VA(B)
+  synergy: number; // VA(AB) - [VA(A)+VA(B)]
+  premium: number; // cash premium paid over target market value
+  cost: number; // total paid for the target = VA(B) + premium
+  npv: number; // gain to the acquirer = synergy - premium
+}
+
+// VAN dell'acquisizione = sinergie - premio.
+export function mnaEval(vaA: number, vaB: number, vaAB: number, premiumPct: number): MnaResult {
+  const combinedStandalone = vaA + vaB;
+  const synergy = vaAB - combinedStandalone;
+  const premium = vaB * (premiumPct / 100);
+  const cost = vaB + premium;
+  const npv = synergy - premium;
+  return { combinedStandalone, synergy, premium, cost, npv };
+}
+
+// ---------- aumento di capitale a pagamento (rights issue) ----------
+
+export interface RightsResult {
+  exRights: number; // P_to — prezzo teorico ex-diritto
+  rightValue: number; // d — valore del diritto di opzione
+  aiafFactor: number; // K = P_to/P_cum — fattore di rettifica AIAF
+  proceeds: number; // capitale raccolto = m·Pe
+  dilution: number; // m/(n+m) — quota di diluizione
+}
+
+// n vecchie azioni, m nuove azioni, Pcum prezzo cum-diritto, Pe prezzo di emissione.
+export function rightsIssue(n: number, m: number, pCum: number, pe: number): RightsResult {
+  const exRights = (n * pCum + m * pe) / (n + m);
+  const rightValue = pCum - exRights;
+  const aiafFactor = pCum > 0 ? exRights / pCum : 0;
+  return { exRights, rightValue, aiafFactor, proceeds: m * pe, dilution: m / (n + m) };
+}
