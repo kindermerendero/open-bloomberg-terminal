@@ -25,6 +25,7 @@ interface Props {
 
 export default function MarkowitzPanel({ symbols }: Props) {
   const [benchmark, setBenchmark] = useState("^GSPC");
+  const [allowShort, setAllowShort] = useState(true);
   const [rfPct, setRfPct] = useState<number | null>(null);
   const [result, setResult] = useState<FrontierResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,7 +68,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
         const closes = aligned.slice(0, symbols.length);
         const bench = aligned[symbols.length];
         if (closes.some((c) => c.length < 30)) throw new Error("not enough overlapping history");
-        const r = markowitz(symbols, closes, bench, rfPct / 100);
+        const r = markowitz(symbols, closes, bench, rfPct / 100, allowShort);
         if (!r) throw new Error("optimization failed (singular covariance?)");
         setResult(r);
       } catch (e) {
@@ -82,7 +83,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [symbols, benchmark, rfPct]);
+  }, [symbols, benchmark, rfPct, allowShort]);
 
   // ----- scatter geometry -----
   const plot = useMemo(() => {
@@ -136,7 +137,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
         Markowitz — {symbols.join(" / ")}
-        <span className="sub">DAILY LOG RETURNS, 1Y · SHORT ALLOWED</span>
+        <span className="sub">DAILY LOG RETURNS, 1Y · {allowShort ? "SHORT ALLOWED" : "LONG ONLY"}</span>
       </div>
       <div className="controls">
         <label>
@@ -159,6 +160,17 @@ export default function MarkowitzPanel({ symbols }: Props) {
           />
         </label>
         <span className="hint">rf default = 13W T-BILL (^IRX)</span>
+        <label>
+          SHORT SELLING
+          <div className="seg">
+            <button className={allowShort ? "active" : ""} onClick={() => setAllowShort(true)}>
+              ALLOWED
+            </button>
+            <button className={!allowShort ? "active" : ""} onClick={() => setAllowShort(false)}>
+              LONG ONLY
+            </button>
+          </div>
+        </label>
       </div>
       <div className="panel-body">
         {loading && <div className="loading">OPTIMIZING…</div>}
@@ -291,11 +303,13 @@ export default function MarkowitzPanel({ symbols }: Props) {
               </tbody>
             </table>
             <p className="note" style={{ padding: "0 10px 10px" }}>
-              Closed-form mean-variance frontier (Merton 1972) on annualized daily log returns, short
-              selling allowed (Σwᵢ=1, no sign constraint). Amber curve = efficient frontier, dark
-              cloud = feasible region (random portfolios), cyan dashed = capital market line, GMV =
-              global minimum variance, TAN = max-Sharpe tangency. Squares are single assets colored
-              by β risk class. Historical estimates — not investment advice.
+              {allowShort
+                ? "Closed-form mean-variance frontier (Merton 1972) on annualized daily log returns, short selling allowed (Σwᵢ=1, no sign constraint)."
+                : "Long-only mean-variance frontier (w≥0, Σwᵢ=1) solved numerically by projected-gradient QP over a risk-aversion sweep."}{" "}
+              Amber curve = efficient frontier, dark cloud = feasible region (random portfolios), cyan
+              dashed = capital market line, GMV = global minimum variance, TAN = max-Sharpe tangency.
+              Squares are single assets colored by β risk class. Historical estimates — not investment
+              advice.
             </p>
           </>
         )}

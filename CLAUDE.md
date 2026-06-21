@@ -26,7 +26,7 @@ Tutte le chiamate esterne passano dalle API route Next.js (`src/app/api/*`) per 
 ## Convenzioni
 - Standard: pragmatico (progetto personale open source)
 - UI keyboard-driven: barra comandi stile Bloomberg (es. `AAPL GP` = grafico, `AAPL DES` = descrizione, `N` = news, `FX`, `CRY`, `HELP`).
-- **Modulo Tiburzi (scienza degli investimenti)** — analytics: `AAPL CAPM` (F6), `AAPL OV` (F7), `MKWZ AAPL,MSFT,NVDA` frontiera Markowitz (F8), `BOND`/`YC` struttura a termine + calcolatore bond (F9)
+- **Modulo Tiburzi (scienza degli investimenti)** — analytics: `AAPL CAPM` (F6), `AAPL OV` (F7), `MKWZ AAPL,MSFT,NVDA` frontiera Markowitz (F8, toggle short selling ALLOWED/LONG ONLY), `BOND`/`YC` struttura a termine + calcolatore bond (F9)
 - **Modulo Barchiesi (finanza aziendale)** — corporate finance: `AAPL EQV` (F10) equity valuation (DDM Gordon + 2-stadi, PVGO, multipli; auto-fill da SEC + costo del capitale via CAPM), `MNA` sinergie/VAN acquisizione, `RGT` aumento di capitale a pagamento + buyback, `IPO` bookbuilding/underpricing/greenshoe, `OPA` tender offer (soglie 30%/90%, premio, difese)
 - Nessuna API key richiesta: il progetto deve funzionare con `git clone && npm install && npm run dev`
 

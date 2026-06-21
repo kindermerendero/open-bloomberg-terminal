@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026-06-21] — Markowitz: toggle short selling (ALLOWED / LONG ONLY)
+- Aggiunto interruttore **SHORT SELLING** nei controlli del pannello Markowitz (F8): `ALLOWED` (default) usa la forma chiusa di Merton (short consentito, pesi senza vincolo di segno); `LONG ONLY` impone `wᵢ≥0, Σwᵢ=1`
+- Il caso long-only non ha soluzione in forma chiusa → nuovo solver numerico in `src/lib/quant.ts`: `projectSimplex` (proiezione euclidea sul simplesso, Wang & Carreira-Perpiñán 2013) + `minVarSimplex` (gradient descent proiettato sul sotto-problema `min ½wᵀΣw − q·μᵀw`). Sweep dell'avversione al rischio q: q=0 → GMV, q→∞ → vertice a massimo rendimento; la frontiera efficiente è l'inviluppo superiore dei punti, la tangente è il punto a Sharpe massimo, la cloud diventa campionamento Dirichlet sul simplesso
+- `markowitz()` ora prende il parametro `allowShort` (5° arg, default true). Sotto-titolo, nota e cloud si adattano alla modalità
+- Verifica numerica: con ottimo non vincolato già positivo le due modalità coincidono (vincolo inattivo); con asset correlato a rendimento inferiore lo short produce pesi −10/+11 mentre long-only clampa a [0,1] con risultato più sensato
+
 ## [2026-06-21] — Fix scala grafico Markowitz (assi esplosi a ±18.000%)
 - **Bug**: con lo short consentito la nuvola di portafogli random esplodeva (assi Y fino a −18.183%, X fino a 17.546%) e frontiera/asset/GMV collassavano in un puntino. Causa: la cloud usava pesi `raw[i]/Σraw` con `raw` gaussiane → quando le gaussiane quasi si annullano `Σraw≈0` e i pesi schizzano a migliaia
 - `src/lib/quant.ts`: normalizzazione stabile della cloud via proiezione sull'iperpiano Σw=1 (`w = raw − (Σraw−1)/n`, perturbazione gaussiana dell'equal-weight con `spread=0.6`) — pesi limitati, niente divisione per ~0. Tangency calcolata prima della frontiera e range della frontiera esteso per coprire GMV + asset + tangency (prima la TAN a +70% cadeva fuori dalla curva disegnata fino a ~34%)
