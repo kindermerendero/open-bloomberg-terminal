@@ -360,20 +360,8 @@ export function markowitz(
   const retGmv = B / A;
   const volGmv = Math.sqrt(1 / A);
 
-  // efficient-frontier hyperbola: var(m) = (A m^2 - 2B m + C)/D
-  const lo = retGmv - 0.6 * Math.max(Math.abs(retGmv), 0.2);
-  const hi = retGmv + 0.9 * Math.max(Math.abs(retGmv), 0.2);
-  const frontier: PortfolioPoint[] = [];
-  const STEPS = 120;
-  for (let k = 0; k <= STEPS; k++) {
-    const m = lo + ((hi - lo) * k) / STEPS;
-    const variance = (A * m * m - 2 * B * m + C) / D;
-    if (variance > 0) frontier.push({ vol: Math.sqrt(variance), ret: m });
-  }
-
   // tangency portfolio (max Sharpe), defined when B - A*rf != 0
   let tangency: FrontierResult["tangency"] = null;
-  let cml: PortfolioPoint[] = [];
   const denom = B - A * rf;
   if (Math.abs(denom) > 1e-9) {
     const excess = mu.map((x) => x - rf);
@@ -385,20 +373,47 @@ export function markowitz(
       const volTan = Math.sqrt(varTan);
       const sharpe = (retTan - rf) / volTan;
       tangency = { vol: volTan, ret: retTan, sharpe, weights: wTan };
-      const maxVol = Math.max(volTan * 1.6, ...frontier.map((p) => p.vol));
-      cml = [
-        { vol: 0, ret: rf },
-        { vol: maxVol, ret: rf + sharpe * maxVol },
-      ];
     }
   }
 
-  // feasible region: random portfolios with weights summing to 1 (short allowed)
+  // efficient-frontier hyperbola: var(m) = (A m^2 - 2B m + C)/D
+  // span the return axis so the curve covers GMV, all single assets and the
+  // tangency point (with short selling the tangency can sit well above assets)
+  const retAnchors = [retGmv, ...mu, ...(tangency ? [tangency.ret] : [])];
+  const muMin = Math.min(...retAnchors);
+  const muMax = Math.max(...retAnchors);
+  const span = Math.max(muMax - muMin, 0.1);
+  const lo = muMin - 0.15 * span;
+  const hi = muMax + 0.15 * span;
+  const frontier: PortfolioPoint[] = [];
+  const STEPS = 120;
+  for (let k = 0; k <= STEPS; k++) {
+    const m = lo + ((hi - lo) * k) / STEPS;
+    const variance = (A * m * m - 2 * B * m + C) / D;
+    if (variance > 0) frontier.push({ vol: Math.sqrt(variance), ret: m });
+  }
+
+  // capital market line: (0,rf) through tangency
+  let cml: PortfolioPoint[] = [];
+  if (tangency) {
+    const maxVol = Math.max(tangency.vol * 1.6, ...frontier.map((p) => p.vol));
+    cml = [
+      { vol: 0, ret: rf },
+      { vol: maxVol, ret: rf + tangency.sharpe * maxVol },
+    ];
+  }
+
+  // feasible region: random portfolios with weights summing to 1 (short allowed).
+  // Project gaussian perturbations of the equal-weight portfolio onto the affine
+  // hyperplane Σw=1 (w = raw - (Σraw-1)/n). This keeps weights bounded — unlike
+  // dividing by Σraw, which blows up when the gaussians nearly cancel.
   const cloud: PortfolioPoint[] = [];
+  const eq = 1 / n;
+  const spread = 0.6;
   for (let s = 0; s < cloudSize; s++) {
-    const raw = Array.from({ length: n }, () => gauss());
-    const sum = raw.reduce((a, b) => a + b, 0) || 1;
-    const w = raw.map((x) => x / sum);
+    const raw = Array.from({ length: n }, () => eq + gauss() * spread);
+    const adj = (raw.reduce((a, b) => a + b, 0) - 1) / n;
+    const w = raw.map((x) => x - adj);
     const ret = dot(w, mu);
     const variance = dot(w, matVec(Sigma, w));
     if (variance > 0) cloud.push({ vol: Math.sqrt(variance), ret });

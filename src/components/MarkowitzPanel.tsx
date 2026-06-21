@@ -90,18 +90,19 @@ export default function MarkowitzPanel({ symbols }: Props) {
     const W = 640;
     const H = 420;
     const m = { l: 56, r: 16, t: 16, b: 40 };
-    const pts = [
-      ...result.cloud,
+    // axis bounds from the meaningful points only — the random cloud can contain
+    // extreme long/short portfolios that would otherwise blow up the scale
+    const core = [
       ...result.frontier,
       ...result.assets.map((a) => ({ vol: a.vol, ret: a.ret })),
       result.gmv,
       ...(result.tangency ? [result.tangency] : []),
       { vol: 0, ret: result.rf },
     ];
-    const vols = pts.map((p) => p.vol);
-    const rets = pts.map((p) => p.ret);
+    const vols = core.map((p) => p.vol);
+    const rets = core.map((p) => p.ret);
     const xMin = 0;
-    const xMax = Math.max(...vols) * 1.05;
+    const xMax = Math.max(...vols) * 1.1;
     let yMin = Math.min(...rets);
     let yMax = Math.max(...rets);
     const pad = (yMax - yMin) * 0.1 || 0.02;
@@ -109,7 +110,9 @@ export default function MarkowitzPanel({ symbols }: Props) {
     yMax += pad;
     const sx = (v: number) => m.l + ((v - xMin) / (xMax - xMin)) * (W - m.l - m.r);
     const sy = (v: number) => H - m.b - ((v - yMin) / (yMax - yMin)) * (H - m.t - m.b);
-    return { W, H, m, sx, sy, xMin, xMax, yMin, yMax };
+    const inView = (p: { vol: number; ret: number }) =>
+      p.vol >= xMin && p.vol <= xMax && p.ret >= yMin && p.ret <= yMax;
+    return { W, H, m, sx, sy, xMin, xMax, yMin, yMax, inView };
   }, [result]);
 
   if (symbols.length < 2) {
@@ -191,7 +194,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
                 </text>
 
                 {/* feasible region cloud */}
-                {result.cloud.map((p, i) => (
+                {result.cloud.filter(plot.inView).map((p, i) => (
                   <circle key={`c-${i}`} cx={plot.sx(p.vol)} cy={plot.sy(p.ret)} r={0.8} fill="#5a4a20" opacity={0.5} />
                 ))}
                 {/* frontier hyperbola */}

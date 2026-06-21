@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-06-21] — Fix scala grafico Markowitz (assi esplosi a ±18.000%)
+- **Bug**: con lo short consentito la nuvola di portafogli random esplodeva (assi Y fino a −18.183%, X fino a 17.546%) e frontiera/asset/GMV collassavano in un puntino. Causa: la cloud usava pesi `raw[i]/Σraw` con `raw` gaussiane → quando le gaussiane quasi si annullano `Σraw≈0` e i pesi schizzano a migliaia
+- `src/lib/quant.ts`: normalizzazione stabile della cloud via proiezione sull'iperpiano Σw=1 (`w = raw − (Σraw−1)/n`, perturbazione gaussiana dell'equal-weight con `spread=0.6`) — pesi limitati, niente divisione per ~0. Tangency calcolata prima della frontiera e range della frontiera esteso per coprire GMV + asset + tangency (prima la TAN a +70% cadeva fuori dalla curva disegnata fino a ~34%)
+- `src/components/MarkowitzPanel.tsx`: assi calcolati solo dai punti significativi (frontiera/asset/GMV/tangency/rf), non più dalla cloud; punti cloud fuori finestra clippati in render (`plot.inView`)
+
 ## [2026-06-20] — Modulo corporate finance (Barchiesi): EQV, MNA, RGT, IPO, OPA
 - Aggiunto l'intero modulo **finanza aziendale** per coprire la parte del corso "Analisi dei Sistemi Finanziari" della prof.ssa Barchiesi (il terminale copriva finora solo il modulo Tiburzi/scienza degli investimenti)
 - **EQV** (`F10`, `AAPL EQV`/`DDM`) — equity valuation data-driven: DDM Gordon `P0=D1/(r−g)`, DDM a due stadi (g₁ per N anni → g₂ terminale Gordon, con tabella dividendi proiettati e TV), **PVGO = P − EPS/r**, multipli P/E, P/BV, dividend yield. Auto-fill: D₀/EPS/BVPS/ROE/payout da SEC EDGAR, costo del capitale r dal **CAPM** (β vs S&P500, rf da ^IRX) → collega il modulo Tiburzi a quello Barchiesi. Tutti gli input restano editabili
