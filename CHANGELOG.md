@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-06-21] — Markowitz: visualizzazione zona di fattibilità con bordi tracciati
+- Il pannello Markowitz (F8) ora ombreggia la **regione di fattibilità** e ne traccia il contorno, invece di mostrare solo la nuvola di punti. Inviluppo calcolato in `MarkowitzPanel.tsx` (memo `region`) affettando la cloud per fasce di rendimento e prendendo min/max σ per fascia (smoothing a 3 tap)
+- Short allowed → regione semi-infinita a destra della frontiera min-varianza (chiusa sul bordo destro del grafico); long only → regione chiusa e limitata (bordo sinistro = min σ, bordo destro = max σ). Fill ambra translucido + contorno ambra
+- Punti cloud mantenuti bianchi sopra l'area; nota aggiornata
+
 ## [2026-06-21] — Markowitz: toggle short selling (ALLOWED / LONG ONLY)
 - Aggiunto interruttore **SHORT SELLING** nei controlli del pannello Markowitz (F8): `ALLOWED` (default) usa la forma chiusa di Merton (short consentito, pesi senza vincolo di segno); `LONG ONLY` impone `wᵢ≥0, Σwᵢ=1`
 - Il caso long-only non ha soluzione in forma chiusa → nuovo solver numerico in `src/lib/quant.ts`: `projectSimplex` (proiezione euclidea sul simplesso, Wang & Carreira-Perpiñán 2013) + `minVarSimplex` (gradient descent proiettato sul sotto-problema `min ½wᵀΣw − q·μᵀw`). Sweep dell'avversione al rischio q: q=0 → GMV, q→∞ → vertice a massimo rendimento; la frontiera efficiente è l'inviluppo superiore dei punti, la tangente è il punto a Sharpe massimo, la cloud diventa campionamento Dirichlet sul simplesso

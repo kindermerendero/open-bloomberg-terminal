@@ -116,6 +116,58 @@ export default function MarkowitzPanel({ symbols }: Props) {
     return { W, H, m, sx, sy, xMin, xMax, yMin, yMax, inView };
   }, [result]);
 
+  // ----- feasible-region outline -----
+  // Slice the random cloud by return and take the min/max volatility per slice to
+  // recover the boundary of the feasible set. Short-allowed → semi-infinite region
+  // to the right of the min-variance frontier; long-only → closed bounded region.
+  const region = useMemo(() => {
+    if (!result || !plot) return null;
+    const { sx, sy, xMax, yMin, yMax, inView } = plot;
+    const pts = result.cloud.filter(inView);
+    if (pts.length < 20) return null;
+
+    const N = 60;
+    const minv = new Array(N).fill(Infinity);
+    const maxv = new Array(N).fill(-Infinity);
+    for (const p of pts) {
+      let k = Math.floor(((p.ret - yMin) / (yMax - yMin)) * N);
+      if (k < 0) k = 0;
+      if (k >= N) k = N - 1;
+      if (p.vol < minv[k]) minv[k] = p.vol;
+      if (p.vol > maxv[k]) maxv[k] = p.vol;
+    }
+    let slices: Array<{ ret: number; lo: number; hi: number }> = [];
+    for (let k = 0; k < N; k++) {
+      if (minv[k] === Infinity) continue;
+      slices.push({ ret: yMin + ((k + 0.5) / N) * (yMax - yMin), lo: minv[k], hi: maxv[k] });
+    }
+    if (slices.length < 3) return null;
+    // light 3-tap smoothing to take the jaggedness out of the sampled envelopes
+    const smooth = (key: "lo" | "hi") =>
+      slices.map((s, i) => {
+        const a = slices[Math.max(0, i - 1)][key];
+        const c = slices[Math.min(slices.length - 1, i + 1)][key];
+        return (a + s[key] + c) / 3;
+      });
+    const lo = smooth("lo");
+    const hi = smooth("hi");
+    slices = slices.map((s, i) => ({ ret: s.ret, lo: lo[i], hi: hi[i] }));
+
+    // left border: minimum-variance envelope (bottom → top)
+    let d = slices.map((s, i) => `${i === 0 ? "M" : "L"}${sx(s.lo)},${sy(s.ret)}`).join(" ");
+    const top = slices[slices.length - 1];
+    const bot = slices[0];
+    if (allowShort) {
+      // open to the right → close along the plot's right edge
+      d += ` L${sx(xMax)},${sy(top.ret)} L${sx(xMax)},${sy(bot.ret)} Z`;
+    } else {
+      // right border: maximum-variance envelope (top → bottom)
+      for (let i = slices.length - 1; i >= 0; i--) d += ` L${sx(slices[i].hi)},${sy(slices[i].ret)}`;
+      d += " Z";
+    }
+    return d;
+  }, [result, plot, allowShort]);
+
   if (symbols.length < 2) {
     return (
       <div className="panel" style={{ flex: "1 1 auto" }}>
@@ -205,6 +257,10 @@ export default function MarkowitzPanel({ symbols }: Props) {
                   E(R)
                 </text>
 
+                {/* feasible region: shaded area + traced border */}
+                {region && (
+                  <path d={region} fill="var(--amber)" fillOpacity={0.07} stroke="var(--amber)" strokeOpacity={0.45} strokeWidth={1} strokeLinejoin="round" />
+                )}
                 {/* feasible region cloud */}
                 {result.cloud.filter(plot.inView).map((p, i) => (
                   <circle key={`c-${i}`} cx={plot.sx(p.vol)} cy={plot.sy(p.ret)} r={1.1} fill="var(--white)" opacity={0.35} />
@@ -306,10 +362,10 @@ export default function MarkowitzPanel({ symbols }: Props) {
               {allowShort
                 ? "Closed-form mean-variance frontier (Merton 1972) on annualized daily log returns, short selling allowed (Σwᵢ=1, no sign constraint)."
                 : "Long-only mean-variance frontier (w≥0, Σwᵢ=1) solved numerically by projected-gradient QP over a risk-aversion sweep."}{" "}
-              Amber curve = efficient frontier, dark cloud = feasible region (random portfolios), cyan
-              dashed = capital market line, GMV = global minimum variance, TAN = max-Sharpe tangency.
-              Squares are single assets colored by β risk class. Historical estimates — not investment
-              advice.
+              Amber curve = efficient frontier, shaded area = feasible region (boundary traced from
+              sampled portfolios, dots), cyan dashed = capital market line, GMV = global minimum
+              variance, TAN = max-Sharpe tangency. Squares are single assets colored by β risk class.
+              Historical estimates — not investment advice.
             </p>
           </>
         )}
