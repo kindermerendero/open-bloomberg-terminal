@@ -402,6 +402,33 @@ table.data td.dim {
   color: var(--text-dim);
 }
 
+/* ---------- DDM sensitivity matrix ---------- */
+table.sens {
+  width: calc(100% - 20px);
+  margin: 4px 10px 8px;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+table.sens th,
+table.sens td {
+  border: 1px solid var(--border);
+  padding: 3px 4px;
+  text-align: center;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+table.sens thead th,
+table.sens tbody th {
+  color: var(--amber);
+  background: #0a0600;
+  font-weight: 600;
+}
+table.sens td.cur {
+  outline: 2px solid var(--yellow);
+  outline-offset: -2px;
+  font-weight: 700;
+}
+
 /* ---------- news ---------- */
 .news-item {
   display: block;

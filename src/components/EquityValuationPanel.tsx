@@ -19,6 +19,17 @@ interface Props {
 // clamp auto-detected growth into a sane band so a noisy ROE doesn't blow up Gordon
 const clampG = (g: number) => Math.max(-5, Math.min(g, 12));
 
+// heat color for the sensitivity matrix: green = DDM above market (undervalued),
+// red = below (overvalued); intensity scales with the gap, saturating at ±40%
+const sensBg = (gap: number | null): string => {
+  if (gap == null) return "transparent";
+  const a = Math.min(Math.abs(gap) / 0.4, 1) * 0.55;
+  return gap >= 0 ? `rgba(0,217,106,${a})` : `rgba(255,59,48,${a})`;
+};
+
+const SENS_N = 7; // 7×7 grid centered on the current (r, g₁)
+const SENS_MID = (SENS_N - 1) / 2;
+
 export default function EquityValuationPanel({ symbol, quote }: Props) {
   const [fund, setFund] = useState<Fundamentals | null>(null);
   const [loading, setLoading] = useState(false);
@@ -108,6 +119,19 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
 
   const fair = twoStage.price ?? gordon;
   const gap = fair != null && price != null ? (fair - price) / price : null;
+
+  // fair-value sensitivity to cost of equity (r, columns) and high growth (g₁, rows)
+  const sensCols = Array.from({ length: SENS_N }, (_, i) => rPct + (i - SENS_MID));
+  const sensRows = Array.from({ length: SENS_N }, (_, j) => g1Pct + (SENS_MID - j));
+  const sensCells =
+    price != null && d0 > 0
+      ? sensRows.map((gp) =>
+          sensCols.map((rp) => {
+            const res = ddmTwoStage(d0, rp / 100, gp / 100, Math.min(g2, gp / 100), years);
+            return { fv: res.price, gap: res.price != null ? (res.price - price) / price : null };
+          })
+        )
+      : null;
   const verdict =
     gap == null
       ? "PROVIDE A DIVIDEND > 0 TO RUN THE DDM"
@@ -242,6 +266,41 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
                   </tr>
                 </tbody>
               </table>
+            )}
+
+            {sensCells && (
+              <>
+                <div className="panel-title" style={{ marginTop: 8 }}>
+                  Fair-Value Sensitivity
+                  <span className="sub">2-STAGE DDM · vs MARKET {price != null ? fmtNum(price) : "—"}</span>
+                </div>
+                <table className="sens">
+                  <thead>
+                    <tr>
+                      <th>g₁ \ r</th>
+                      {sensCols.map((c, i) => (
+                        <th key={i}>{fmtNum(c, 1)}%</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sensCells.map((row, ri) => (
+                      <tr key={ri}>
+                        <th>{fmtNum(sensRows[ri], 1)}%</th>
+                        {row.map((cell, ci) => (
+                          <td
+                            key={ci}
+                            className={ri === SENS_MID && ci === SENS_MID ? "cur" : ""}
+                            style={{ background: sensBg(cell.gap) }}
+                          >
+                            {cell.fv != null ? fmtNum(cell.fv) : "—"}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
             )}
 
             <div className="verdict">{verdict}</div>

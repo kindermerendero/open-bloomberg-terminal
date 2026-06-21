@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-06-21] — EQV: matrice di sensitività del fair value (r × g₁)
+- Aggiunta al pannello Equity Valuation (F10) una **heatmap 7×7** del fair value DDM a due stadi al variare di costo del capitale `r` (colonne) e crescita `g₁` (righe), step 1 punto %, centrata sui valori correnti
+- Celle colorate verde (DDM sopra il mercato → sottovalutata) / rosso (sotto → sopravvalutata), intensità ∝ gap (satura a ±40%); cella corrente evidenziata in giallo. Mostra a colpo d'occhio la fragilità del DDM rispetto al denominatore `(r−g)`
+- `EquityValuationPanel.tsx`: helper `sensBg`, calcolo `sensCells` (riusa `ddmTwoStage`, terminale `g₂` cappato a `min(g₂, g₁)` per cella); nuovi stili `table.sens` in `globals.css`. Visibile solo quando il DDM è eseguibile (prezzo noto e D₀>0)
+
 ## [2026-06-21] — Struttura a termine: storico, confronto, area euro, animazione
 - Il modulo Fixed Income (F9) non mostra più solo l'ultima curva ma **~2 anni di storico giornaliero**. Tre estensioni:
   1. **Scrubber data + animazione**: slider per scorrere ogni giorno della finestra; pulsante PLAY che anima la curva nel tempo (oldest→newest); bottone LATEST per tornare all'ultima
