@@ -434,7 +434,7 @@ export default function Terminal() {
           {mode === "BOND" && <BondPanel />}
           {mode === "EQV" && <EquityValuationPanel symbol={symbol} quote={quote} />}
           {mode === "MNA" && <MnaPanel />}
-          {mode === "RGT" && <RightsIssuePanel />}
+          {mode === "RGT" && <RightsIssuePanel symbol={symbol} />}
           {mode === "IPO" && <IpoPanel />}
           {mode === "OPA" && <OpaPanel />}
         </div>

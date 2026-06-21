@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-06-21] — RGT buyback: auto-fill dati reali + grafico EPS accretion
+- Il modulo RGT (modalità BUYBACK) ora si **auto-compila** dal ticker caricato: azioni in circolazione, utile netto e prezzo da `/api/fundamentals` (SEC EDGAR + Yahoo); cassa di default = un anno di utili. Valori monetari in milioni (`RightsIssuePanel` riceve la prop `symbol` da `Terminal.tsx`)
+- Nuovo **grafico EPS accretion**: curva dell'accrescimento EPS al variare della cassa destinata al buyback `acc(c)=shares/(shares−c/price)−1`, con linea rossa del **limite legale 20%** del capitale sociale e marker sul punto corrente
+- Verifica live AAPL: 14.687M azioni, utile $112.010M, EPS 7,63; buyback da 1 anno di utili → 2,56% del capitale, accretion +2,63%
+
 ## [2026-06-21] — MNA: value bridge (waterfall sinergie − premio = VAN)
 - Aggiunto al pannello M&A (MNA) un **value bridge** a cascata che visualizza l'equazione del modulo: barra verde = sinergie create, barra rossa = premio ceduto al target, barra finale = NPV trattenuto dall'acquirente (verde/rosso per segno), con linee di collegamento ai livelli cumulati e didascalie "→ target" / "→ acquirer"
 - `MnaPanel.tsx`: memo `bridge` (geometria SVG waterfall su `synergy`/`premium`/`npv` da `mnaEval`); rende chiaro a colpo d'occhio che un premio alto può azzerare le sinergie (col default sinergie 100 − premio 100 = NPV 0)
