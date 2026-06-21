@@ -1,5 +1,9 @@
 # Changelog
 
+## [2026-06-21] — MNA: value bridge (waterfall sinergie − premio = VAN)
+- Aggiunto al pannello M&A (MNA) un **value bridge** a cascata che visualizza l'equazione del modulo: barra verde = sinergie create, barra rossa = premio ceduto al target, barra finale = NPV trattenuto dall'acquirente (verde/rosso per segno), con linee di collegamento ai livelli cumulati e didascalie "→ target" / "→ acquirer"
+- `MnaPanel.tsx`: memo `bridge` (geometria SVG waterfall su `synergy`/`premium`/`npv` da `mnaEval`); rende chiaro a colpo d'occhio che un premio alto può azzerare le sinergie (col default sinergie 100 − premio 100 = NPV 0)
+
 ## [2026-06-21] — EQV: costo del capitale stabile (rf + β·ERP) + verdetto corretto
 - **Bug**: il costo del capitale auto-derivato usava il CAPM con rendimento di mercato *realizzato* sull'ultimo anno → instabilissimo (NVDA: 2,98% in uno snapshot, 39,28% in un altro). Con `r` troppo basso le colonne `r ≤ g₂` della matrice davano "—" e il verdetto mostrava erroneamente "PROVIDE A DIVIDEND" pur con D₀>0
 - `EquityValuationPanel.tsx`: `r` ora = **rf + β·ERP** (premio per il rischio azionario forward, costante 5,5%); β resta dal CAPM vs S&P500. Stabile (~13,8% per NVDA) e coerente con la pratica di valutazione
