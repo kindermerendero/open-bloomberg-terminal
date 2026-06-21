@@ -1,29 +1,22 @@
 import { NextResponse } from "next/server";
 
-// US Treasury par yield curve — daily, public CSV, no API key
-// https://home.treasury.gov/resource-center/data-chart-center/interest-rates
-const COLS: Array<[string, number]> = [
-  ["1 Mo", 1 / 12],
-  ["1.5 Month", 1.5 / 12],
-  ["2 Mo", 2 / 12],
-  ["3 Mo", 3 / 12],
-  ["4 Mo", 4 / 12],
-  ["6 Mo", 6 / 12],
-  ["1 Yr", 1],
-  ["2 Yr", 2],
-  ["3 Yr", 3],
-  ["5 Yr", 5],
-  ["7 Yr", 7],
-  ["10 Yr", 10],
-  ["20 Yr", 20],
-  ["30 Yr", 30],
-];
+// Government bond term structure from free public sources, no API key:
+//  - source=us  → US Treasury par yield curve (Treasury.gov daily CSV)
+//  - source=ez  → Euro area AAA spot rate curve (ECB Data Portal, SDMX csvdata)
+// Returns the full daily history over a ~2y window (newest first) so the client
+// can scrub dates, overlay comparisons and chart the 10Y–2Y spread over time.
 
 interface CurvePoint {
   label: string;
   years: number;
   yield: number;
 }
+interface DatedCurve {
+  date: string; // ISO YYYY-MM-DD
+  points: CurvePoint[];
+}
+
+const WINDOW = 520; // ~2y of business days
 
 // split one CSV line honoring double-quoted fields
 function splitCsv(line: string): string[] {
@@ -41,7 +34,31 @@ function splitCsv(line: string): string[] {
   return out;
 }
 
-async function fetchYear(year: number): Promise<{ date: string; points: CurvePoint[] } | null> {
+// ---------- US Treasury (Treasury.gov) ----------
+
+const US_COLS: Array<[string, number]> = [
+  ["1 Mo", 1 / 12],
+  ["1.5 Month", 1.5 / 12],
+  ["2 Mo", 2 / 12],
+  ["3 Mo", 3 / 12],
+  ["4 Mo", 4 / 12],
+  ["6 Mo", 6 / 12],
+  ["1 Yr", 1],
+  ["2 Yr", 2],
+  ["3 Yr", 3],
+  ["5 Yr", 5],
+  ["7 Yr", 7],
+  ["10 Yr", 10],
+  ["20 Yr", 20],
+  ["30 Yr", 30],
+];
+
+const usDateToIso = (mdy: string): string => {
+  const [m, d, y] = mdy.split("/");
+  return y ? `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}` : mdy;
+};
+
+async function fetchUsYear(year: number): Promise<DatedCurve[]> {
   const url =
     `https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/${year}/all` +
     `?type=daily_treasury_yield_curve&field_tdr_date_value=${year}&page&_format=csv`;
@@ -49,45 +66,112 @@ async function fetchYear(year: number): Promise<{ date: string; points: CurvePoi
     headers: { "User-Agent": "Mozilla/5.0", Accept: "*/*" },
     next: { revalidate: 3600 },
   });
-  if (!res.ok) return null;
-  const text = await res.text();
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return null;
+  if (!res.ok) return [];
+  const lines = (await res.text()).trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
   const header = splitCsv(lines[0]).map((h) => h.trim().replace(/^"|"$/g, ""));
-  const row = splitCsv(lines[1]).map((c) => c.trim()); // most recent day first
-  const idx = (label: string) => header.indexOf(label);
-  const points: CurvePoint[] = [];
-  for (const [label, years] of COLS) {
-    const i = idx(label);
-    if (i < 0) continue;
-    const v = parseFloat(row[i]);
-    if (Number.isFinite(v)) points.push({ label: label.toUpperCase(), years, yield: v });
+  const dateIdx = header.indexOf("Date");
+  const cols = US_COLS.map(([label, years]) => [header.indexOf(label), label, years] as const).filter(
+    ([i]) => i >= 0
+  );
+  const out: DatedCurve[] = [];
+  for (let r = 1; r < lines.length; r++) {
+    const row = splitCsv(lines[r]).map((c) => c.trim());
+    const points: CurvePoint[] = [];
+    for (const [i, label, years] of cols) {
+      const v = parseFloat(row[i]);
+      if (Number.isFinite(v)) points.push({ label: label.toUpperCase().replace(" ", ""), years, yield: v });
+    }
+    if (points.length) out.push({ date: usDateToIso(row[dateIdx] || ""), points });
   }
-  if (points.length === 0) return null;
-  return { date: row[idx("Date")] || "", points };
+  return out;
 }
 
-export async function GET() {
+async function loadUs(year: number): Promise<DatedCurve[]> {
+  const all = (await Promise.all([year, year - 1, year - 2].map(fetchUsYear))).flat();
+  all.sort((a, b) => (a.date < b.date ? 1 : -1)); // newest first
+  return all;
+}
+
+// ---------- Euro area (ECB Data Portal) ----------
+
+const EZ_TENORS: Array<[string, number]> = [
+  ["SR_3M", 0.25],
+  ["SR_6M", 0.5],
+  ["SR_9M", 0.75],
+  ["SR_1Y", 1],
+  ["SR_2Y", 2],
+  ["SR_3Y", 3],
+  ["SR_5Y", 5],
+  ["SR_7Y", 7],
+  ["SR_10Y", 10],
+  ["SR_20Y", 20],
+  ["SR_30Y", 30],
+];
+
+async function loadEz(startYear: number, startMonth: string): Promise<DatedCurve[]> {
+  const key = EZ_TENORS.map(([t]) => t).join("+");
+  const url =
+    `https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.${key}` +
+    `?startPeriod=${startYear}-${startMonth}-01&format=csvdata`;
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0", Accept: "text/csv" },
+    next: { revalidate: 3600 },
+  });
+  if (!res.ok) return [];
+  const lines = (await res.text()).trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const header = splitCsv(lines[0]);
+  const iType = header.indexOf("DATA_TYPE_FM");
+  const iDate = header.indexOf("TIME_PERIOD");
+  const iVal = header.indexOf("OBS_VALUE");
+  const yearsOf = new Map(EZ_TENORS.map(([t, y]) => [t, y]));
+  const byDate = new Map<string, CurvePoint[]>();
+  for (let r = 1; r < lines.length; r++) {
+    const c = splitCsv(lines[r]);
+    const years = yearsOf.get(c[iType]);
+    const v = parseFloat(c[iVal]);
+    if (years == null || !Number.isFinite(v)) continue;
+    const date = c[iDate];
+    if (!byDate.has(date)) byDate.set(date, []);
+    byDate.get(date)!.push({ label: c[iType].replace("SR_", ""), years, yield: v });
+  }
+  const out: DatedCurve[] = [...byDate.entries()].map(([date, points]) => ({
+    date,
+    points: points.sort((a, b) => a.years - b.years),
+  }));
+  out.sort((a, b) => (a.date < b.date ? 1 : -1)); // newest first
+  return out;
+}
+
+// ---------- handler ----------
+
+export async function GET(req: Request) {
   try {
+    const source = new URL(req.url).searchParams.get("source") === "ez" ? "ez" : "us";
     const now = new Date();
     const year = now.getUTCFullYear();
-    let data = await fetchYear(year);
-    if (!data) data = await fetchYear(year - 1); // early-January fallback
-    if (!data) return NextResponse.json({ error: "treasury data unavailable" }, { status: 502 });
+    const startMonth = String(now.getUTCMonth() + 1).padStart(2, "0");
 
-    const pts = data.points;
-    const y = (yr: number) => pts.find((p) => p.years === yr)?.yield ?? null;
-    const s2 = y(2);
-    const s10 = y(10);
-    const spread = s2 != null && s10 != null ? s10 - s2 : null;
-    const shape =
-      spread == null ? "n/a" : spread < -0.05 ? "INVERTED" : spread < 0.2 ? "FLAT" : "NORMAL";
+    let curves = source === "ez" ? await loadEz(year - 2, startMonth) : await loadUs(year);
+    if (!curves.length) return NextResponse.json({ error: "term structure data unavailable" }, { status: 502 });
+    curves = curves.slice(0, WINDOW);
+
+    // 10Y–2Y spread time series (oldest → newest), in percentage points
+    const spreadHistory = curves
+      .map((c) => {
+        const y2 = c.points.find((p) => p.years === 2)?.yield;
+        const y10 = c.points.find((p) => p.years === 10)?.yield;
+        return y2 != null && y10 != null ? { date: c.date, spread: Number((y10 - y2).toFixed(4)) } : null;
+      })
+      .filter((x): x is { date: string; spread: number } => x != null)
+      .reverse();
 
     return NextResponse.json({
-      date: data.date,
-      points: pts,
-      spread10_2: spread,
-      shape,
+      source: source.toUpperCase(),
+      label: source === "ez" ? "Euro Area · ECB AAA" : "US Treasury",
+      curves,
+      spreadHistory,
     });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 502 });

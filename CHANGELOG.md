@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026-06-21] — Struttura a termine: storico, confronto, area euro, animazione
+- Il modulo Fixed Income (F9) non mostra più solo l'ultima curva ma **~2 anni di storico giornaliero**. Tre estensioni:
+  1. **Scrubber data + animazione**: slider per scorrere ogni giorno della finestra; pulsante PLAY che anima la curva nel tempo (oldest→newest); bottone LATEST per tornare all'ultima
+  2. **Confronto sovrapposto**: toggle `vs 1M` / `vs 1Y` che disegnano la curva di ~1 mese/1 anno fa (ciano tratteggiata / grigia) sotto quella selezionata
+  3. **Area euro (BCE)**: toggle MARKET US TREASURY / EURO AREA — nuova fonte ECB Data Portal (SDMX dataflow `YC`, curva AAA Svensson spot rate, 3M–30Y, no API key)
+- **Storico spread 10Y–2Y**: sparkline sotto la curva, tratti rossi dove invertita (segnale di recessione), marker verticale sulla data selezionata
+- `/api/treasury?source=us|ez`: restituisce tutte le curve giornaliere (newest first, finestra 520 giorni ≈ 2y) + serie storica dello spread. Parsing multi-riga del CSV Treasury (3 anni) e SDMX csvdata BCE (multi-tenor con `+`, `startPeriod`)
+- `BondPanel.tsx` riscritto: stato source/selIdx/overlay/playing, memo `plot` (multi-curva) e `spark` (sparkline spread con downsampling ~220 pt). Nuovi stili `.ts-scrub`/`.ts-legend`/`.ts-latest` in `globals.css`
+- Verifica live: US 520 curve 2024-05→2026-06 (spread −38bp→+27bp), EZ 520 curve BCE (spread −33bp→+43bp)
+
 ## [2026-06-21] — Markowitz: zona di fattibilità "a ombrello" da bordi analitici
 - I bordi della regione di fattibilità non sono più stimati dalla nuvola random (rumorosa sui lati del simplesso → spezzate dritte verso i vertici) ma calcolati **analiticamente** in `quant.ts`: nuovi campi `mvFull` (frontiera a minima varianza completa, entrambi i rami) ed `edges` (archi delle frontiere a 2 asset = "stecche" dell'ombrello, una per ogni coppia di titoli)
 - Long-only: il ramo inferiore della min-varianza si ottiene estendendo lo sweep di q ai valori negativi (`±qMax`); la regione chiusa = naso del proiettile (bordo sinistro, min σ) + inviluppo esterno degli archi a 2 asset (bordo destro, max σ), entrambi lisci. Le stecche vengono disegnate come linee ambra tenui → look "a ombrello" delle slide
