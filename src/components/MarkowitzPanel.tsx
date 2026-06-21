@@ -207,7 +207,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
 
                 {/* feasible region cloud */}
                 {result.cloud.filter(plot.inView).map((p, i) => (
-                  <circle key={`c-${i}`} cx={plot.sx(p.vol)} cy={plot.sy(p.ret)} r={0.8} fill="#5a4a20" opacity={0.5} />
+                  <circle key={`c-${i}`} cx={plot.sx(p.vol)} cy={plot.sy(p.ret)} r={1.1} fill="var(--white)" opacity={0.35} />
                 ))}
                 {/* frontier hyperbola */}
                 <path d={line(result.frontier)} fill="none" stroke="var(--amber)" strokeWidth={1.6} />
