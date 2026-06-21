@@ -59,8 +59,48 @@ const RANGE_CMDS: Record<string, ChartRange> = {
   MAX: "max",
 };
 
+// two-level navigation: category tabs → per-category function keys
+type Cat = "MARKET" | "INVEST" | "CORP";
+const CATEGORIES: Array<{ id: Cat; label: string; items: Array<[Mode, string]> }> = [
+  {
+    id: "MARKET",
+    label: "MARKET",
+    items: [
+      ["SEC", "SECURITY"],
+      ["FX", "FX"],
+      ["CRY", "CRYPTO"],
+      ["NEWS", "NEWS"],
+      ["HELP", "HELP"],
+    ],
+  },
+  {
+    id: "INVEST",
+    label: "INVESTMENTS",
+    items: [
+      ["CAPM", "CAPM"],
+      ["OV", "OPTION VAL"],
+      ["MKWZ", "MARKOWITZ"],
+      ["BOND", "FIXED INC"],
+    ],
+  },
+  {
+    id: "CORP",
+    label: "CORPORATE",
+    items: [
+      ["EQV", "EQUITY VAL"],
+      ["MNA", "M&A"],
+      ["RGT", "RIGHTS"],
+      ["IPO", "IPO"],
+      ["OPA", "TENDER"],
+    ],
+  },
+];
+const catOf = (m: Mode): Cat =>
+  CATEGORIES.find((c) => c.items.some((it) => it[0] === m))?.id ?? "MARKET";
+
 export default function Terminal() {
   const [mode, setMode] = useState<Mode>("SEC");
+  const [activeCat, setActiveCat] = useState<Cat>("MARKET");
   const [symbol, setSymbol] = useState<string | null>("AAPL");
   const [portfolio, setPortfolio] = useState<string[]>([]);
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -345,46 +385,28 @@ export default function Terminal() {
     [loadSecurity, notify, symbol]
   );
 
-  // ----- function keys -----
+  // keep the active category in sync with the open panel (so the bar follows
+  // navigation from the command line / watchlist, not just clicks)
   useEffect(() => {
+    setActiveCat(catOf(mode));
+  }, [mode]);
+
+  // ----- function keys: F1..Fn map to the active category's modules -----
+  const activeItems = CATEGORIES.find((c) => c.id === activeCat)?.items ?? [];
+  useEffect(() => {
+    const items = CATEGORIES.find((c) => c.id === activeCat)?.items ?? [];
     const handler = (e: KeyboardEvent) => {
-      const map: Record<string, Mode> = {
-        F1: "HELP",
-        F2: "SEC",
-        F3: "FX",
-        F4: "CRY",
-        F5: "NEWS",
-        F6: "CAPM",
-        F7: "OV",
-        F8: "MKWZ",
-        F9: "BOND",
-        F10: "EQV",
-      };
-      if (map[e.key]) {
+      const fk = /^F(\d+)$/.exec(e.key);
+      if (!fk) return;
+      const idx = Number(fk[1]) - 1;
+      if (idx >= 0 && idx < items.length) {
         e.preventDefault();
-        setMode(map[e.key]);
+        setMode(items[idx][0]);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
-
-  const fkeys: Array<[string, Mode, string]> = [
-    ["F1", "HELP", "HELP"],
-    ["F2", "SEC", "SECURITY"],
-    ["F3", "FX", "FX"],
-    ["F4", "CRY", "CRYPTO"],
-    ["F5", "NEWS", "NEWS"],
-    ["F6", "CAPM", "CAPM"],
-    ["F7", "OV", "OPTION VAL"],
-    ["F8", "MKWZ", "MARKOWITZ"],
-    ["F9", "BOND", "FIXED INC"],
-    ["F10", "EQV", "EQUITY VAL"],
-    ["MNA", "MNA", "M&A"],
-    ["RGT", "RGT", "RIGHTS"],
-    ["IPO", "IPO", "IPO"],
-    ["OPA", "OPA", "TENDER"],
-  ];
+  }, [activeCat]);
 
   return (
     <div className="terminal">
@@ -444,10 +466,17 @@ export default function Terminal() {
         </div>
       </div>
 
+      <div className="cattabs">
+        {CATEGORIES.map((c) => (
+          <button key={c.id} className={activeCat === c.id ? "active" : ""} onClick={() => setActiveCat(c.id)}>
+            {c.label}
+          </button>
+        ))}
+      </div>
       <div className="fkeys">
-        {fkeys.map(([fk, m, label]) => (
-          <button key={fk} className={mode === m ? "active" : ""} onClick={() => setMode(m)}>
-            <span className="fk">{fk}</span> {label}
+        {activeItems.map(([m, label], i) => (
+          <button key={m} className={mode === m ? "active" : ""} onClick={() => setMode(m)}>
+            <span className="fk">F{i + 1}</span> {label}
           </button>
         ))}
       </div>

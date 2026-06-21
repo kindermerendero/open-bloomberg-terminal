@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-06-21] — Navigazione a due livelli: tab di categoria + F-keys contestuali
+- La barra in basso (14 voci, di cui solo 10 con tasto funzione) è stata riorganizzata in **3 categorie** con tab: MARKET / INVESTMENTS / CORPORATE. Selezionata una categoria, i tasti F1–Fn mappano i suoi moduli
+- La categoria attiva si **sincronizza col pannello aperto** (`catOf(mode)`), così la barra segue anche la navigazione da command line / watchlist, non solo i click
+- `Terminal.tsx`: nuova struttura `CATEGORIES`, stato `activeCat`, handler tastiera dinamico per F-key; `globals.css` stile `.cattabs`; `HelpPanel` aggiornato (sezione Navigation per categoria)
+
 ## [2026-06-21] — IPO: cost bridge + sensibilità prezzo + curva di domanda
 - Tre grafici aggiunti al pannello IPO:
   1. **Cost bridge** (waterfall): `gross − spread − fixed − money left = netto catturato`, visualizza il costo all-in della quotazione

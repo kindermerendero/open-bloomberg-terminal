@@ -35,17 +35,10 @@ const WATCHLIST_CMDS: Array<[string, string]> = [
   ["DEL <SYM>", "Remove a symbol from the watchlist"],
 ];
 
-const FKEYS: Array<[string, string]> = [
-  ["F1", "HELP"],
-  ["F2", "SEC — security view"],
-  ["F3", "FX monitor"],
-  ["F4", "Crypto monitor"],
-  ["F5", "News"],
-  ["F6", "CAPM analytics"],
-  ["F7", "Option valuation (binomial lattice)"],
-  ["F8", "Markowitz frontier"],
-  ["F9", "Fixed income / term structure"],
-  ["F10", "Equity valuation (DDM / PVGO)"],
+const NAV_CATS: Array<[string, string]> = [
+  ["MARKET", "F1 Security · F2 FX · F3 Crypto · F4 News · F5 Help"],
+  ["INVESTMENTS", "F1 CAPM · F2 Option Val · F3 Markowitz · F4 Fixed Inc"],
+  ["CORPORATE", "F1 Equity Val · F2 M&A · F3 Rights · F4 IPO · F5 Tender"],
 ];
 
 export default function HelpPanel() {
@@ -88,8 +81,8 @@ export default function HelpPanel() {
             <span className="desc">{desc}</span>
           </div>
         ))}
-        <h3>Function Keys</h3>
-        {FKEYS.map(([cmd, desc]) => (
+        <h3>Navigation — category tabs + F-keys</h3>
+        {NAV_CATS.map(([cmd, desc]) => (
           <div className="cmd-row" key={cmd}>
             <span className="cmd">{cmd}</span>
             <span className="desc">{desc}</span>
