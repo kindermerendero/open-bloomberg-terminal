@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026-06-21] — Markowitz: zona di fattibilità "a ombrello" da bordi analitici
+- I bordi della regione di fattibilità non sono più stimati dalla nuvola random (rumorosa sui lati del simplesso → spezzate dritte verso i vertici) ma calcolati **analiticamente** in `quant.ts`: nuovi campi `mvFull` (frontiera a minima varianza completa, entrambi i rami) ed `edges` (archi delle frontiere a 2 asset = "stecche" dell'ombrello, una per ogni coppia di titoli)
+- Long-only: il ramo inferiore della min-varianza si ottiene estendendo lo sweep di q ai valori negativi (`±qMax`); la regione chiusa = naso del proiettile (bordo sinistro, min σ) + inviluppo esterno degli archi a 2 asset (bordo destro, max σ), entrambi lisci. Le stecche vengono disegnate come linee ambra tenui → look "a ombrello" delle slide
+- Short allowed: bordo sinistro = `mvFull` (iperbole), regione chiusa sul bordo destro del grafico
+- `MarkowitzPanel.tsx`: memo `region` affetta per fascia di rendimento i punti analitici (non più la cloud) per ricavare gli inviluppi min/max σ
+
 ## [2026-06-21] — Markowitz: visualizzazione zona di fattibilità con bordi tracciati
 - Il pannello Markowitz (F8) ora ombreggia la **regione di fattibilità** e ne traccia il contorno, invece di mostrare solo la nuvola di punti. Inviluppo calcolato in `MarkowitzPanel.tsx` (memo `region`) affettando la cloud per fasce di rendimento e prendendo min/max σ per fascia (smoothing a 3 tap)
 - Short allowed → regione semi-infinita a destra della frontiera min-varianza (chiusa sul bordo destro del grafico); long only → regione chiusa e limitata (bordo sinistro = min σ, bordo destro = max σ). Fill ambra translucido + contorno ambra

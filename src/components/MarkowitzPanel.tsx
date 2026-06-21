@@ -117,55 +117,49 @@ export default function MarkowitzPanel({ symbols }: Props) {
   }, [result]);
 
   // ----- feasible-region outline -----
-  // Slice the random cloud by return and take the min/max volatility per slice to
-  // recover the boundary of the feasible set. Short-allowed → semi-infinite region
-  // to the right of the min-variance frontier; long-only → closed bounded region.
+  // Boundary from analytic curves (not the noisy random cloud): left edge = the full
+  // minimum-variance frontier; right edge = outer envelope of the 2-asset arcs.
+  // Short-allowed → semi-infinite region (closed at the plot's right edge); long-only
+  // → closed "umbrella" bounded by the min-var nose and the pairwise ribs.
   const region = useMemo(() => {
     if (!result || !plot) return null;
     const { sx, sy, xMax, yMin, yMax, inView } = plot;
-    const pts = result.cloud.filter(inView);
-    if (pts.length < 20) return null;
+    const left = result.mvFull.filter(inView).sort((a, b) => a.ret - b.ret);
+    if (left.length < 2) return null;
 
-    const N = 60;
+    const ribs = result.edges.map((arc) =>
+      arc.filter(inView).map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.vol)},${sy(p.ret)}`).join(" ")
+    );
+
+    if (allowShort) {
+      let d = left.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.vol)},${sy(p.ret)}`).join(" ");
+      d += ` L${sx(xMax)},${sy(left[left.length - 1].ret)} L${sx(xMax)},${sy(left[0].ret)} Z`;
+      return { fill: d, ribs: [] as string[] };
+    }
+
+    // long-only: slice analytic boundary candidates (min-var frontier + arcs) by
+    // return; min σ per slice = smooth left edge, max σ = smooth right edge
+    const cand = [...result.mvFull, ...result.edges.flat()].filter(inView);
+    const N = 72;
     const minv = new Array(N).fill(Infinity);
     const maxv = new Array(N).fill(-Infinity);
-    for (const p of pts) {
+    for (const p of cand) {
       let k = Math.floor(((p.ret - yMin) / (yMax - yMin)) * N);
       if (k < 0) k = 0;
       if (k >= N) k = N - 1;
       if (p.vol < minv[k]) minv[k] = p.vol;
       if (p.vol > maxv[k]) maxv[k] = p.vol;
     }
-    let slices: Array<{ ret: number; lo: number; hi: number }> = [];
+    const slices: Array<{ ret: number; lo: number; hi: number }> = [];
     for (let k = 0; k < N; k++) {
       if (minv[k] === Infinity) continue;
       slices.push({ ret: yMin + ((k + 0.5) / N) * (yMax - yMin), lo: minv[k], hi: maxv[k] });
     }
     if (slices.length < 3) return null;
-    // light 3-tap smoothing to take the jaggedness out of the sampled envelopes
-    const smooth = (key: "lo" | "hi") =>
-      slices.map((s, i) => {
-        const a = slices[Math.max(0, i - 1)][key];
-        const c = slices[Math.min(slices.length - 1, i + 1)][key];
-        return (a + s[key] + c) / 3;
-      });
-    const lo = smooth("lo");
-    const hi = smooth("hi");
-    slices = slices.map((s, i) => ({ ret: s.ret, lo: lo[i], hi: hi[i] }));
-
-    // left border: minimum-variance envelope (bottom → top)
     let d = slices.map((s, i) => `${i === 0 ? "M" : "L"}${sx(s.lo)},${sy(s.ret)}`).join(" ");
-    const top = slices[slices.length - 1];
-    const bot = slices[0];
-    if (allowShort) {
-      // open to the right → close along the plot's right edge
-      d += ` L${sx(xMax)},${sy(top.ret)} L${sx(xMax)},${sy(bot.ret)} Z`;
-    } else {
-      // right border: maximum-variance envelope (top → bottom)
-      for (let i = slices.length - 1; i >= 0; i--) d += ` L${sx(slices[i].hi)},${sy(slices[i].ret)}`;
-      d += " Z";
-    }
-    return d;
+    for (let i = slices.length - 1; i >= 0; i--) d += ` L${sx(slices[i].hi)},${sy(slices[i].ret)}`;
+    d += " Z";
+    return { fill: d, ribs };
   }, [result, plot, allowShort]);
 
   if (symbols.length < 2) {
@@ -257,9 +251,14 @@ export default function MarkowitzPanel({ symbols }: Props) {
                   E(R)
                 </text>
 
-                {/* feasible region: shaded area + traced border */}
+                {/* feasible region: shaded area + traced border + 2-asset ribs */}
                 {region && (
-                  <path d={region} fill="var(--amber)" fillOpacity={0.07} stroke="var(--amber)" strokeOpacity={0.45} strokeWidth={1} strokeLinejoin="round" />
+                  <>
+                    <path d={region.fill} fill="var(--amber)" fillOpacity={0.07} stroke="var(--amber)" strokeOpacity={0.5} strokeWidth={1.2} strokeLinejoin="round" />
+                    {region.ribs.map((d, i) => (
+                      <path key={`rib-${i}`} d={d} fill="none" stroke="var(--amber)" strokeOpacity={0.22} strokeWidth={0.8} />
+                    ))}
+                  </>
                 )}
                 {/* feasible region cloud */}
                 {result.cloud.filter(plot.inView).map((p, i) => (

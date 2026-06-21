@@ -303,8 +303,10 @@ export interface PortfolioPoint {
 
 export interface FrontierResult {
   assets: AssetStat[];
-  frontier: PortfolioPoint[]; // full hyperbola (lower + efficient branch)
-  cloud: PortfolioPoint[]; // random feasible portfolios (the feasible region)
+  frontier: PortfolioPoint[]; // efficient branch (what gets highlighted)
+  mvFull: PortfolioPoint[]; // full minimum-variance frontier (both branches) — left edge of the feasible region
+  edges: PortfolioPoint[][]; // 2-asset frontier arcs (simplex edges) — the "ribs" bounding the long-only region
+  cloud: PortfolioPoint[]; // random feasible portfolios (decorative scatter)
   gmv: { vol: number; ret: number; weights: number[] };
   tangency: { vol: number; ret: number; sharpe: number; weights: number[] } | null;
   cml: PortfolioPoint[]; // capital market line: (0,rf) through tangency
@@ -388,8 +390,13 @@ export function markowitz(
   let gmv: FrontierResult["gmv"];
   let tangency: FrontierResult["tangency"] = null;
   let frontier: PortfolioPoint[] = [];
+  const mvFull: PortfolioPoint[] = [];
   let cml: PortfolioPoint[] = [];
   const cloud: PortfolioPoint[] = [];
+
+  const muMin = Math.min(...mu);
+  const muMax = Math.max(...mu);
+  const muSpan = Math.max(muMax - muMin, 0.1);
 
   if (allowShort) {
     // ===== closed-form Merton frontier (short selling allowed) =====
@@ -422,6 +429,14 @@ export function markowitz(
       const variance = (A * m * m - 2 * B * m + C) / D;
       if (variance > 0) frontier.push({ vol: Math.sqrt(variance), ret: m });
     }
+    // full min-variance frontier (wide range) — left boundary of the feasible region
+    const loF = muMin - 0.6 * muSpan;
+    const hiF = muMax + 0.6 * muSpan;
+    for (let k = 0; k <= 160; k++) {
+      const m = loF + ((hiF - loF) * k) / 160;
+      const variance = (A * m * m - 2 * B * m + C) / D;
+      if (variance > 0) mvFull.push({ vol: Math.sqrt(variance), ret: m });
+    }
 
     // feasible region: gaussian perturbations of equal weight projected onto the
     // affine hyperplane Σw=1 (w = raw - (Σraw-1)/n) — keeps weights bounded
@@ -447,20 +462,25 @@ export function markowitz(
       const variance = dot(w, matVec(Sigma, w));
       if (variance > 0) pts.push({ vol: Math.sqrt(variance), ret: dot(w, mu), weights: w });
     };
-    // risk-aversion sweep: q=0 → GMV, q→qMax → max-return vertex (geometric in q)
-    for (let k = 0; k <= QN; k++) {
-      const q = k === 0 ? 0 : qMax * Math.pow(1e-3, 1 - k / QN);
+    // risk-aversion sweep over ±q: q=0 → GMV, q→+qMax → max-return vertex (upper,
+    // efficient branch), q→−qMax → min-return vertex (lower branch). Together they
+    // trace the full long-only minimum-variance frontier (left edge of the region).
+    for (let k = -QN; k <= QN; k++) {
+      const q = k === 0 ? 0 : Math.sign(k) * qMax * Math.pow(1e-3, 1 - Math.abs(k) / QN);
       addPt(minVarSimplex(Sigma, mu, q, L));
     }
-    // explicit max-return vertex (100% in the highest-μ asset)
+    // explicit min/max-return vertices (100% in the lowest/highest-μ asset)
     const kMax = mu.reduce((bi, x, i) => (x > mu[bi] ? i : bi), 0);
+    const kMin = mu.reduce((bi, x, i) => (x < mu[bi] ? i : bi), 0);
     addPt(mu.map((_, i) => (i === kMax ? 1 : 0)));
+    addPt(mu.map((_, i) => (i === kMin ? 1 : 0)));
     pts.sort((a, b) => a.ret - b.ret);
 
     const gmvPt = pts.reduce((best, p) => (p.vol < best.vol ? p : best), pts[0]);
     gmv = { vol: gmvPt.vol, ret: gmvPt.ret, weights: gmvPt.weights };
-    // efficient branch only: keep the upper boundary (ret ≥ GMV return)
+    // efficient branch (ret ≥ GMV); full min-var frontier = the whole sorted sweep
     frontier = pts.filter((p) => p.ret >= gmvPt.ret - 1e-9).map((p) => ({ vol: p.vol, ret: p.ret }));
+    mvFull.push(...pts.map((p) => ({ vol: p.vol, ret: p.ret })));
 
     // tangency = max-Sharpe portfolio on the long-only frontier
     let bestSharpe = 0;
@@ -482,6 +502,23 @@ export function markowitz(
     }
   }
 
+  // 2-asset frontier arcs (simplex edges): for each pair (i,j) sweep the weight
+  // t∈[0,1] of a two-asset portfolio. These curves are the ribs of the long-only
+  // feasible region — their outer envelope is its right boundary.
+  const edges: PortfolioPoint[][] = [];
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const arc: PortfolioPoint[] = [];
+      for (let k = 0; k <= 28; k++) {
+        const t = k / 28;
+        const w = mu.map((_, a) => (a === i ? t : a === j ? 1 - t : 0));
+        const variance = dot(w, matVec(Sigma, w));
+        if (variance > 0) arc.push({ vol: Math.sqrt(variance), ret: dot(w, mu) });
+      }
+      edges.push(arc);
+    }
+  }
+
   // capital market line: (0,rf) through tangency
   if (tangency) {
     const maxVol = Math.max(tangency.vol * 1.6, ...frontier.map((p) => p.vol));
@@ -494,6 +531,8 @@ export function markowitz(
   return {
     assets,
     frontier,
+    mvFull,
+    edges,
     cloud,
     gmv,
     tangency,
