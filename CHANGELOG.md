@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026-06-21] — EQV: costo del capitale stabile (rf + β·ERP) + verdetto corretto
+- **Bug**: il costo del capitale auto-derivato usava il CAPM con rendimento di mercato *realizzato* sull'ultimo anno → instabilissimo (NVDA: 2,98% in uno snapshot, 39,28% in un altro). Con `r` troppo basso le colonne `r ≤ g₂` della matrice davano "—" e il verdetto mostrava erroneamente "PROVIDE A DIVIDEND" pur con D₀>0
+- `EquityValuationPanel.tsx`: `r` ora = **rf + β·ERP** (premio per il rischio azionario forward, costante 5,5%); β resta dal CAPM vs S&P500. Stabile (~13,8% per NVDA) e coerente con la pratica di valutazione
+- Verdetto distingue ora i casi a fair value nullo: D₀≤0 → "non-payer, serve un DCF"; altrimenti → "DDM diverge (r ≤ g), alza r o abbassa g"
+- Aggiornati hint e nota; nessun impatto sul pannello CAPM (F6), che resta descrittivo (realizzato)
+
 ## [2026-06-21] — EQV: matrice di sensitività del fair value (r × g₁)
 - Aggiunta al pannello Equity Valuation (F10) una **heatmap 7×7** del fair value DDM a due stadi al variare di costo del capitale `r` (colonne) e crescita `g₁` (righe), step 1 punto %, centrata sui valori correnti
 - Celle colorate verde (DDM sopra il mercato → sottovalutata) / rosso (sotto → sopravvalutata), intensità ∝ gap (satura a ±40%); cella corrente evidenziata in giallo. Mostra a colpo d'occhio la fragilità del DDM rispetto al denominatore `(r−g)`

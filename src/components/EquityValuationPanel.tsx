@@ -19,6 +19,11 @@ interface Props {
 // clamp auto-detected growth into a sane band so a noisy ROE doesn't blow up Gordon
 const clampG = (g: number) => Math.max(-5, Math.min(g, 12));
 
+// forward equity risk premium for the valuation cost of equity (r = rf + β·ERP).
+// Using a stable ERP beats CAPM's realized trailing market return, which can fall
+// below rf and produce a nonsensically low cost of equity for high-β names.
+const EQUITY_RISK_PREMIUM = 0.055;
+
 // heat color for the sensitivity matrix: green = DDM above market (undervalued),
 // red = below (overvalued); intensity scales with the gap, saturating at ±40%
 const sensBg = (gap: number | null): string => {
@@ -80,7 +85,10 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
           const bench = await bRes.json();
           const rf = (await rfRes.json())?.quotes?.[0]?.price ?? 4;
           const s = capmStats(asset.candles as Candle[], bench.candles as Candle[], rf / 100);
-          if (s && Number.isFinite(s.erCapm)) setRPct(Number((s.erCapm * 100).toFixed(2)));
+          if (s && Number.isFinite(s.beta)) {
+            const re = s.rf + s.beta * EQUITY_RISK_PREMIUM; // forward cost of equity
+            setRPct(Number((re * 100).toFixed(2)));
+          }
         } catch {
           /* keep manual cost of equity */
         }
@@ -133,13 +141,15 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
         )
       : null;
   const verdict =
-    gap == null
-      ? "PROVIDE A DIVIDEND > 0 TO RUN THE DDM"
-      : gap > 0.1
+    gap != null
+      ? gap > 0.1
         ? `UNDERVALUED — DDM FAIR VALUE ${fmtPct(gap * 100)} ABOVE MARKET`
         : gap < -0.1
           ? `OVERVALUED — DDM FAIR VALUE ${fmtPct(gap * 100)} VS MARKET`
-          : "FAIRLY PRICED — DDM WITHIN ±10% OF MARKET";
+          : "FAIRLY PRICED — DDM WITHIN ±10% OF MARKET"
+      : d0 <= 0
+        ? "PROVIDE A DIVIDEND > 0 TO RUN THE DDM (NON-PAYERS NEED A DCF)"
+        : "DDM DIVERGES (r ≤ g) — RAISE COST OF EQUITY OR LOWER GROWTH";
 
   return (
     <div className="panel" style={{ flex: "1 1 auto" }}>
@@ -179,7 +189,7 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
           BVPS
           <input type="number" step="0.01" value={bvps} onChange={(e) => setBvps(parseFloat(e.target.value) || 0)} />
         </label>
-        <span className="hint">r auto = CAPM β·(E[Rm]−rf)+rf · g₁ auto = (1−payout)·ROE</span>
+        <span className="hint">r auto = rf + β·ERP (ERP 5.5%) · g₁ auto = (1−payout)·ROE</span>
       </div>
 
       <div className="panel-body">
@@ -307,9 +317,10 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
             <p className="note" style={{ padding: "0 10px 10px" }}>
               DDM Gordon: P₀ = D₁/(r−g). Two-stage: dividends grow at g₁ for N years then at g₂ forever
               (Gordon terminal value discounted back). PVGO = P − EPS/r isolates the value of growth
-              opportunities; a high P/E driven by PVGO signals a growth stock. r is the CAPM cost of
-              equity; g₁ defaults to sustainable growth (1−payout)·ROE. Fundamentals: SEC EDGAR (US
-              filers, latest 10-K); dividends: Yahoo (TTM). All inputs editable.
+              opportunities; a high P/E driven by PVGO signals a growth stock. r is the cost of equity
+              rf + β·ERP (β from CAPM vs S&P 500, ERP 5.5%); g₁ defaults to sustainable growth
+              (1−payout)·ROE. Fundamentals: SEC EDGAR (US filers, latest 10-K); dividends: Yahoo (TTM).
+              All inputs editable.
             </p>
           </>
         )}
