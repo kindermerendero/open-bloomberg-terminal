@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-06-21] — IPO: cost bridge + sensibilità prezzo + curva di domanda
+- Tre grafici aggiunti al pannello IPO:
+  1. **Cost bridge** (waterfall): `gross − spread − fixed − money left = netto catturato`, visualizza il costo all-in della quotazione
+  2. **Offer-price sensitivity**: net proceeds (ambra, crescente) vs money left on the table (ciano, decrescente) al variare del prezzo di offerta; linea "FAIR" dove i soldi lasciati sul tavolo si azzerano (offer = 1st-day close)
+  3. **Bookbuilding demand**: curva di domanda istituzionale lineare vs prezzo, retta dell'offerta (shares offered), prezzo di clearing `P* = rangeHigh − (rangeHigh−rangeLow)/oversub`
+- Nuovi input bookbuilding: RANGE LOW/HIGH e OVERSUBSCRIPTION × (`IpoPanel.tsx`)
+
 ## [2026-06-21] — RGT buyback: auto-fill dati reali + grafico EPS accretion
 - Il modulo RGT (modalità BUYBACK) ora si **auto-compila** dal ticker caricato: azioni in circolazione, utile netto e prezzo da `/api/fundamentals` (SEC EDGAR + Yahoo); cassa di default = un anno di utili. Valori monetari in milioni (`RightsIssuePanel` riceve la prop `symbol` da `Terminal.tsx`)
 - Nuovo **grafico EPS accretion**: curva dell'accrescimento EPS al variare della cassa destinata al buyback `acc(c)=shares/(shares−c/price)−1`, con linea rossa del **limite legale 20%** del capitale sociale e marker sul punto corrente
