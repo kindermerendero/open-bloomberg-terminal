@@ -96,6 +96,27 @@ export default function CapmPanel({ symbol, quote }: Props) {
           ? "BELOW SML — NEGATIVE ALPHA (OVERVALUED vs CAPM)"
           : "ON THE SML — FAIRLY PRICED vs CAPM";
 
+  // Security Market Line geometry: x = β, y = expected return. The asset's actual
+  // return sits above/below the line by Jensen's alpha.
+  const sml = (() => {
+    if (!stats) return null;
+    const W = 640;
+    const H = 232;
+    const m = { l: 52, r: 16, t: 16, b: 34 };
+    const assetRet = stats.erCapm + stats.alphaAnn; // actual annualized return
+    const betaMax = Math.max(1.4, stats.beta * 1.25);
+    const line1 = stats.rf + betaMax * (stats.erMarket - stats.rf); // SML at βmax
+    const ys = [stats.rf, stats.erMarket, assetRet, stats.erCapm, line1, 0];
+    let yMin = Math.min(...ys);
+    let yMax = Math.max(...ys);
+    const pad = (yMax - yMin) * 0.12 || 0.02;
+    yMin -= pad;
+    yMax += pad;
+    const sx = (b: number) => m.l + (b / betaMax) * (W - m.l - m.r);
+    const sy = (v: number) => H - m.b - ((v - yMin) / (yMax - yMin)) * (H - m.t - m.b);
+    return { W, H, m, sx, sy, betaMax, assetRet, line0: stats.rf, line1, yMin, yMax };
+  })();
+
   return (
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
@@ -179,6 +200,45 @@ export default function CapmPanel({ symbol, quote }: Props) {
                 <span className="v">{stats.n}</span>
               </div>
             </div>
+            {sml && (
+              <>
+                <div className="panel-title" style={{ marginTop: 8 }}>
+                  Security Market Line
+                  <span className="sub">α = ASSET RETURN − SML · β ON X</span>
+                </div>
+                <svg viewBox={`0 0 ${sml.W} ${sml.H}`} className="bond-svg">
+                  <line x1={sml.m.l} y1={sml.H - sml.m.b} x2={sml.W - sml.m.r} y2={sml.H - sml.m.b} stroke="#3d2a00" />
+                  <line x1={sml.m.l} y1={sml.m.t} x2={sml.m.l} y2={sml.H - sml.m.b} stroke="#3d2a00" />
+                  {[sml.yMin, (sml.yMin + sml.yMax) / 2, sml.yMax].map((t, i) => (
+                    <g key={`sy-${i}`}>
+                      <line x1={sml.m.l} y1={sml.sy(t)} x2={sml.W - sml.m.r} y2={sml.sy(t)} stroke="#1a1200" />
+                      <text x={sml.m.l - 6} y={sml.sy(t) + 3} className="mkwz-axis" textAnchor="end">{fmtNum(t * 100, 0)}%</text>
+                    </g>
+                  ))}
+                  {[0, 0.5, 1, sml.betaMax].map((b, i) => (
+                    <text key={`sxb-${i}`} x={sml.sx(b)} y={sml.H - sml.m.b + 14} className="mkwz-axis" textAnchor="middle">{fmtNum(b, 1)}</text>
+                  ))}
+                  {/* SML */}
+                  <line x1={sml.sx(0)} y1={sml.sy(sml.line0)} x2={sml.sx(sml.betaMax)} y2={sml.sy(sml.line1)} stroke="var(--amber)" strokeWidth={1.6} />
+                  {/* alpha gap (asset actual vs SML-predicted) */}
+                  <line x1={sml.sx(stats.beta)} y1={sml.sy(stats.erCapm)} x2={sml.sx(stats.beta)} y2={sml.sy(sml.assetRet)} stroke={stats.alphaAnn >= 0 ? "var(--up)" : "var(--down)"} strokeWidth={1.2} strokeDasharray="3 2" />
+                  {/* rf */}
+                  <circle cx={sml.sx(0)} cy={sml.sy(sml.line0)} r={3} fill="var(--cyan)" />
+                  <text x={sml.sx(0) + 6} y={sml.sy(sml.line0) - 4} className="mkwz-axis" fill="var(--cyan)">rf</text>
+                  {/* market */}
+                  <circle cx={sml.sx(1)} cy={sml.sy(stats.erMarket)} r={3.5} fill="var(--white)" />
+                  <text x={sml.sx(1) + 6} y={sml.sy(stats.erMarket) - 4} className="mkwz-lbl">MKT</text>
+                  {/* SML-predicted point */}
+                  <circle cx={sml.sx(stats.beta)} cy={sml.sy(stats.erCapm)} r={2.5} fill="none" stroke="var(--amber)" />
+                  {/* asset actual */}
+                  <circle cx={sml.sx(stats.beta)} cy={sml.sy(sml.assetRet)} r={4} fill="var(--yellow)" />
+                  <text x={sml.sx(stats.beta) + 6} y={sml.sy(sml.assetRet) + 3} className="mkwz-lbl">{symbol} (α {fmtPct(stats.alphaAnn * 100)})</text>
+                  <text x={sml.W / 2} y={sml.H - 3} className="mkwz-axis" textAnchor="middle">BETA (β)</text>
+                  <text x={14} y={sml.m.t + 6} className="mkwz-axis">E(R)</text>
+                </svg>
+              </>
+            )}
+
             <div className="verdict">{smlVerdict}</div>
             <p className="note" style={{ padding: "0 10px 10px" }}>
               β and α estimated by OLS on daily log returns over the last year vs the selected
