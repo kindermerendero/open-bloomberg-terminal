@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-06-22] — OPA: barra soglie, sensibilità costo/quota, auto-fill
+- Tre aggiunte al pannello OPA (tender offer):
+  1. **Barra soglie di controllo**: 0–100% con quota posseduta (ciano) → quota cercata (ambra) e i marker CONSOB (30% obbligatoria, 50% controllo, 90% squeeze-out, 95% sell-out), evidenziati in rosso quando superati
+  2. **Costo to acquire vs quota**: curva del costo totale al variare della quota cercata, con le linee delle soglie e marker sul target corrente
+  3. **Auto-fill** azioni totali e prezzo di mercato dal ticker caricato (`/api/fundamentals`); prezzo d'offerta seedato a +25% di premio
+- `OpaPanel.tsx` riceve la prop `symbol` da `Terminal.tsx`; costante `THRESHOLDS` condivisa tra le due viste
+
 ## [2026-06-21] — Navigazione a due livelli: tab di categoria + F-keys contestuali
 - La barra in basso (14 voci, di cui solo 10 con tasto funzione) è stata riorganizzata in **3 categorie** con tab: MARKET / INVESTMENTS / CORPORATE. Selezionata una categoria, i tasti F1–Fn mappano i suoi moduli
 - La categoria attiva si **sincronizza col pannello aperto** (`catOf(mode)`), così la barra segue anche la navigazione da command line / watchlist, non solo i click

@@ -458,7 +458,7 @@ export default function Terminal() {
           {mode === "MNA" && <MnaPanel />}
           {mode === "RGT" && <RightsIssuePanel symbol={symbol} />}
           {mode === "IPO" && <IpoPanel />}
-          {mode === "OPA" && <OpaPanel />}
+          {mode === "OPA" && <OpaPanel symbol={symbol} />}
         </div>
         <div className="col">
           <WatchlistPanel quotes={watchQuotes} loading={watchLoading} onSelect={loadSecurity} />
