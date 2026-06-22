@@ -238,14 +238,16 @@ export default function LatticePanel({ symbol, quote }: Props) {
                           y1={nodeY(i, j)}
                           x2={nodeX(i + 1)}
                           y2={nodeY(i + 1, j + 1)}
-                          stroke="#3d2a00"
+                          stroke="var(--amber-dim)"
+                          strokeOpacity={0.55}
                         />
                         <line
                           x1={nodeX(i)}
                           y1={nodeY(i, j)}
                           x2={nodeX(i + 1)}
                           y2={nodeY(i + 1, j)}
-                          stroke="#3d2a00"
+                          stroke="var(--amber-dim)"
+                          strokeOpacity={0.55}
                         />
                       </g>
                     ))
@@ -253,12 +255,20 @@ export default function LatticePanel({ symbol, quote }: Props) {
                   {result.lattice.map((level, i) =>
                     level.map((node, j) => (
                       <g key={`n-${i}-${j}`}>
-                        <text x={nodeX(i)} y={nodeY(i, j) - 3} className="lat-s" textAnchor="middle">
+                        <circle
+                          cx={nodeX(i)}
+                          cy={nodeY(i, j)}
+                          r={2.6}
+                          fill="#120c00"
+                          stroke={node.ex ? "var(--down)" : "var(--amber)"}
+                          strokeWidth={1}
+                        />
+                        <text x={nodeX(i)} y={nodeY(i, j) - 6} className="lat-s" textAnchor="middle">
                           {fmtNum(node.S, 2)}
                         </text>
                         <text
                           x={nodeX(i)}
-                          y={nodeY(i, j) + 10}
+                          y={nodeY(i, j) + 15}
                           className={node.ex ? "lat-v ex" : "lat-v"}
                           textAnchor="middle"
                         >
