@@ -195,13 +195,15 @@ export default function OpaPanel({ symbol }: Props) {
           <rect x={bar.x(0)} y={bar.yTop} width={bar.x(currentPct) - bar.x(0)} height={bar.h} fill="var(--cyan)" opacity={0.7} />
           {/* being acquired */}
           <rect x={bar.x(currentPct)} y={bar.yTop} width={Math.max(0, bar.x(targetPct) - bar.x(currentPct))} height={bar.h} fill="var(--amber)" opacity={0.8} />
-          {/* threshold markers */}
-          {THRESHOLDS.map(([t, label]) => {
+          {/* threshold markers — stagger labels so the close 90/95 lines don't collide */}
+          {THRESHOLDS.map(([t, label], i) => {
             const crossed = targetPct >= t;
+            const ly = bar.yTop - (i % 2 === 0 ? 7 : 18);
+            const anchor = t >= 88 ? "end" : "middle";
             return (
               <g key={t}>
-                <line x1={bar.x(t)} y1={bar.yTop - 4} x2={bar.x(t)} y2={bar.yTop + bar.h + 4} stroke={crossed ? "var(--down)" : "var(--text-dim)"} strokeWidth={1} strokeDasharray="3 2" />
-                <text x={bar.x(t)} y={bar.yTop - 8} className="mkwz-axis" textAnchor="middle" fill={crossed ? "var(--down)" : "var(--text-dim)"}>
+                <line x1={bar.x(t)} y1={ly + 2} x2={bar.x(t)} y2={bar.yTop + bar.h + 4} stroke={crossed ? "var(--down)" : "var(--text-dim)"} strokeWidth={1} strokeDasharray="3 2" />
+                <text x={bar.x(t)} y={ly} className="mkwz-axis" textAnchor={anchor} fill={crossed ? "var(--down)" : "var(--text-dim)"}>
                   {label}
                 </text>
               </g>
