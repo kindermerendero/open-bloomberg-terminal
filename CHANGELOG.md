@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-06-22] — Lucidatura visiva: fix overlap OPA + grafico SML su CAPM
+- Verifica visiva di tutti i 15 pannelli in produzione (screenshot via Chrome headless)
+- **Fix OPA**: le etichette delle soglie 90%/95% si sovrapponevano → stagger verticale + ancoraggio testo (`OpaPanel.tsx`)
+- **CAPM**: aggiunto il grafico **Security Market Line** (β su X, rendimento su Y; retta rf→mercato, punto del titolo sopra/sotto la SML = Jensen's alpha con gap tratteggiato verde/rosso). Riempie lo spazio vuoto che era l'unico squilibrio visivo rimasto tra i pannelli analytics (`CapmPanel.tsx`)
+
 ## [2026-06-22] — OPA: barra soglie, sensibilità costo/quota, auto-fill
 - Tre aggiunte al pannello OPA (tender offer):
   1. **Barra soglie di controllo**: 0–100% con quota posseduta (ciano) → quota cercata (ambra) e i marker CONSOB (30% obbligatoria, 50% controllo, 90% squeeze-out, 95% sell-out), evidenziati in rosso quando superati
