@@ -1,5 +1,8 @@
 # Changelog
 
+## [2026-06-22] — OV: albero binomiale più visibile
+- I rami del lattice CRR erano `#3d2a00` (quasi neri su sfondo nero) → schiariti a `var(--amber-dim)` opacità 0.55; aggiunto un marker circolare su ogni nodo (rosso dove l'esercizio anticipato è ottimale), con offset del testo allargati così il nodo sta pulito tra prezzo e valore (`LatticePanel.tsx`)
+
 ## [2026-06-22] — Lucidatura visiva: fix overlap OPA + grafico SML su CAPM
 - Verifica visiva di tutti i 15 pannelli in produzione (screenshot via Chrome headless)
 - **Fix OPA**: le etichette delle soglie 90%/95% si sovrapponevano → stagger verticale + ancoraggio testo (`OpaPanel.tsx`)
