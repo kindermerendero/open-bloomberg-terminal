@@ -106,6 +106,39 @@ export default function RightsIssuePanel({ symbol }: Props) {
     };
   }, [price, shares, netIncome, cash]);
 
+  // right value vs issue price: d = m·(P_cum − P_e)/(n+m), linear and falling to 0 at P_e = P_cum
+  const rightChart = useMemo(() => {
+    const n = oldSh;
+    const mm = newSh;
+    const P = pCum;
+    if (P <= 0 || n + mm <= 0) return null;
+    const W = 640;
+    const H = 200;
+    const mg = { l: 50, r: 16, t: 16, b: 30 };
+    const dOf = (e: number) => (mm * (P - e)) / (n + mm);
+    const toOf = (e: number) => (n * P + mm * e) / (n + mm);
+    const xMax = P;
+    const yMax = P * 1.05;
+    const sx = (e: number) => mg.l + (e / xMax) * (W - mg.l - mg.r);
+    const sy = (v: number) => H - mg.b - (v / yMax) * (H - mg.t - mg.b);
+    const peX = Math.min(Math.max(pe, 0), xMax);
+    return {
+      W,
+      H,
+      m: mg,
+      sx,
+      sy,
+      xMax,
+      yMax,
+      dPath: `M${sx(0)},${sy(dOf(0))} L${sx(xMax)},${sy(dOf(xMax))}`,
+      toPath: `M${sx(0)},${sy(toOf(0))} L${sx(xMax)},${sy(toOf(xMax))}`,
+      cumY: sy(P),
+      curX: sx(peX),
+      curDY: sy(Math.max(0, dOf(pe))),
+      curD: dOf(pe),
+    };
+  }, [oldSh, newSh, pCum, pe]);
+
   return (
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
@@ -176,6 +209,39 @@ export default function RightsIssuePanel({ symbol }: Props) {
                 <span className="v up">YES — value of right offsets price drop</span>
               </div>
             </div>
+            {rightChart && (
+              <>
+                <div className="panel-title" style={{ marginTop: 8 }}>
+                  Right Value vs Issue Price
+                  <span className="sub">d = m·(P_cum − P_e)/(n+m) · X = P_e</span>
+                </div>
+                <svg viewBox={`0 0 ${rightChart.W} ${rightChart.H}`} className="bond-svg">
+                  <line x1={rightChart.m.l} y1={rightChart.H - rightChart.m.b} x2={rightChart.W - rightChart.m.r} y2={rightChart.H - rightChart.m.b} stroke="var(--grid)" />
+                  <line x1={rightChart.m.l} y1={rightChart.m.t} x2={rightChart.m.l} y2={rightChart.H - rightChart.m.b} stroke="var(--grid)" />
+                  {[0, rightChart.yMax / 2, rightChart.yMax].map((t, i) => (
+                    <g key={`ry-${i}`}>
+                      <line x1={rightChart.m.l} y1={rightChart.sy(t)} x2={rightChart.W - rightChart.m.r} y2={rightChart.sy(t)} stroke="var(--grid-faint)" />
+                      <text x={rightChart.m.l - 6} y={rightChart.sy(t) + 3} className="mkwz-axis" textAnchor="end">{fmtNum(t, 1)}</text>
+                    </g>
+                  ))}
+                  {/* P_cum reference */}
+                  <line x1={rightChart.m.l} y1={rightChart.cumY} x2={rightChart.W - rightChart.m.r} y2={rightChart.cumY} stroke="var(--text-dim)" strokeDasharray="2 2" />
+                  <text x={rightChart.W - rightChart.m.r} y={rightChart.cumY - 4} className="mkwz-axis" textAnchor="end">P_cum {fmtNum(pCum, 1)}</text>
+                  {/* P_to (ex-rights price) for context */}
+                  <path d={rightChart.toPath} fill="none" stroke="var(--cyan)" strokeWidth={1.3} strokeDasharray="4 2" />
+                  {/* right value d */}
+                  <path d={rightChart.dPath} fill="none" stroke="var(--amber)" strokeWidth={1.8} />
+                  {/* current issue price */}
+                  <line x1={rightChart.curX} y1={rightChart.m.t} x2={rightChart.curX} y2={rightChart.H - rightChart.m.b} stroke="var(--yellow)" strokeDasharray="2 2" />
+                  <circle cx={rightChart.curX} cy={rightChart.curDY} r={3.5} fill="var(--yellow)" />
+                  <text x={rightChart.curX + 6} y={rightChart.curDY - 4} className="mkwz-lbl">d {fmtNum(rightChart.curD, 2)}</text>
+                  <text x={rightChart.m.l} y={rightChart.H - 4} className="mkwz-axis">0</text>
+                  <text x={rightChart.W - rightChart.m.r} y={rightChart.H - 4} className="mkwz-axis" textAnchor="end">{fmtNum(rightChart.xMax, 1)}</text>
+                  <text x={rightChart.m.l + 4} y={rightChart.m.t + 9} className="mkwz-axis" fill="var(--amber)">d (RIGHT)</text>
+                  <text x={rightChart.m.l + 4} y={rightChart.m.t + 20} className="mkwz-axis" fill="var(--cyan)">P_to</text>
+                </svg>
+              </>
+            )}
             <p className="note" style={{ padding: "0 10px 10px" }}>
               In a rights issue old shareholders receive an option (diritto) to subscribe m new shares
               every n held at P_e &lt; P_cum. The stock trades down to the theoretical ex-rights price
