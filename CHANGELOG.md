@@ -1,5 +1,9 @@
 # Changelog
 
+## [2026-06-23] — Fix: la tendina benchmark (CAPM/Markowitz) si chiudeva subito
+- Il `CommandBar` riportava il focus sulla command line a **ogni** click del documento → aprendo un `<select>` (benchmark CAPM, Markowitz, ecc.) il focus veniva rubato e la tendina si richiudeva istantaneamente, bloccando la selezione su S&P 500; disturbava anche gli input dei pannelli
+- Fix: il refocus salta i click su controlli di form (`input, select, textarea, option, label, [contenteditable]`). Verificato: dopo il click il focus resta sul select e la scelta del benchmark regge (`CommandBar.tsx`)
+
 ## [2026-06-23] — RGT rights issue: grafico valore del diritto vs prezzo di emissione
 - Aggiunto in modalità RIGHTS ISSUE un grafico di **d = m·(P_cum − P_e)/(n+m)**: lineare e decrescente, si azzera a `P_e = P_cum`. Linea ambra = valore del diritto, linea ciano tratteggiata = prezzo ex-diritto `P_to` (per contesto), riferimento `P_cum`, marker sul prezzo di emissione corrente (`RightsIssuePanel.tsx`, memo `rightChart`)
 
