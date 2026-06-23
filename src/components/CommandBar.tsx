@@ -19,14 +19,18 @@ export default function CommandBar({ onCommand, message, isError }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // keep focus on the command line, Bloomberg style
+  // keep focus on the command line, Bloomberg style — but never steal focus from
+  // a form control the user is interacting with (selects, inputs…), otherwise its
+  // native dropdown/caret closes the instant it's clicked
   useEffect(() => {
-    const refocus = () => {
+    inputRef.current?.focus();
+    const refocus = (e: MouseEvent) => {
       const sel = window.getSelection();
       if (sel && sel.toString()) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input, select, textarea, option, label, [contenteditable]")) return;
       inputRef.current?.focus();
     };
-    refocus();
     document.addEventListener("click", refocus);
     return () => document.removeEventListener("click", refocus);
   }, []);
