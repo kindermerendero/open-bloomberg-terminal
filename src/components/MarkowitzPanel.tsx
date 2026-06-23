@@ -116,25 +116,29 @@ export default function MarkowitzPanel({ symbols }: Props) {
     return { W, H, m, sx, sy, xMin, xMax, yMin, yMax, inView };
   }, [result]);
 
-  // ----- feasible-region outline -----
-  // Boundary from analytic curves (not the noisy random cloud): left edge = the full
-  // minimum-variance frontier; right edge = outer envelope of the 2-asset arcs.
-  // Short-allowed → semi-infinite region (closed at the plot's right edge); long-only
-  // → closed "umbrella" bounded by the min-var nose and the pairwise ribs.
+  // ----- feasible-region shading (fill only, no outline) -----
+  // With only 2 assets the feasible set is a 1-D curve, not an area → nothing to shade.
+  // Short-allowed (≥3) → the whole half-plane right of the minimum-variance hyperbola,
+  // spanning the full chart height. Long-only (≥3) → the bounded "umbrella" bounded by
+  // the min-var nose and the pairwise 2-asset arcs.
   const region = useMemo(() => {
-    if (!result || !plot) return null;
+    if (!result || !plot || result.n < 3) return null;
     const { sx, sy, xMax, yMin, yMax, inView } = plot;
-    const left = result.mvFull.filter(inView).sort((a, b) => a.ret - b.ret);
-    if (left.length < 2) return null;
-
-    const ribs = result.edges.map((arc) =>
-      arc.filter(inView).map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.vol)},${sy(p.ret)}`).join(" ")
-    );
 
     if (allowShort) {
-      let d = left.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.vol)},${sy(p.ret)}`).join(" ");
-      d += ` L${sx(xMax)},${sy(left[left.length - 1].ret)} L${sx(xMax)},${sy(left[0].ret)} Z`;
-      return { fill: d, ribs: [] as string[] };
+      // hyperbola σ(m) = √((A m² − 2B m + C)/D) across the full visible return range
+      const { A, B, C, D } = result.abcd;
+      const N = 90;
+      const pts: Array<{ vol: number; ret: number }> = [];
+      for (let k = 0; k <= N; k++) {
+        const m = yMin + ((yMax - yMin) * k) / N;
+        const variance = (A * m * m - 2 * B * m + C) / D;
+        if (variance > 0) pts.push({ vol: Math.min(Math.sqrt(variance), xMax), ret: m });
+      }
+      if (pts.length < 2) return null;
+      let d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.vol)},${sy(p.ret)}`).join(" ");
+      d += ` L${sx(xMax)},${sy(pts[pts.length - 1].ret)} L${sx(xMax)},${sy(pts[0].ret)} Z`;
+      return d;
     }
 
     // long-only: slice analytic boundary candidates (min-var frontier + arcs) by
@@ -159,7 +163,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
     let d = slices.map((s, i) => `${i === 0 ? "M" : "L"}${sx(s.lo)},${sy(s.ret)}`).join(" ");
     for (let i = slices.length - 1; i >= 0; i--) d += ` L${sx(slices[i].hi)},${sy(slices[i].ret)}`;
     d += " Z";
-    return { fill: d, ribs };
+    return d;
   }, [result, plot, allowShort]);
 
   if (symbols.length < 2) {
@@ -252,7 +256,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
                 </text>
 
                 {/* feasible region: shaded area only (no outline) */}
-                {region && <path d={region.fill} fill="var(--amber)" fillOpacity={0.09} />}
+                {region && <path d={region} fill="var(--amber)" fillOpacity={0.09} />}
                 {/* feasible region cloud */}
                 {result.cloud.filter(plot.inView).map((p, i) => (
                   <circle key={`c-${i}`} cx={plot.sx(p.vol)} cy={plot.sy(p.ret)} r={1.1} fill="var(--white)" opacity={0.35} />
