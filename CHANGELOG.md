@@ -1,5 +1,8 @@
 # Changelog
 
+## [2026-06-23] — RGT rights issue: grafico valore del diritto vs prezzo di emissione
+- Aggiunto in modalità RIGHTS ISSUE un grafico di **d = m·(P_cum − P_e)/(n+m)**: lineare e decrescente, si azzera a `P_e = P_cum`. Linea ambra = valore del diritto, linea ciano tratteggiata = prezzo ex-diritto `P_to` (per contesto), riferimento `P_cum`, marker sul prezzo di emissione corrente (`RightsIssuePanel.tsx`, memo `rightChart`)
+
 ## [2026-06-23] — Tema chiaro/scuro + sistema di variabili colore completo
 - Introdotti **due temi**: scuro (ambra-su-nero stile Bloomberg, invariato) e **chiaro "carta calda"** (crema/avorio, testo marrone scuro, ambra scurita come accento). Selezione **automatica via `prefers-color-scheme`** + **toggle manuale** nell'header (AUTO → DARK → LIGHT, salvato in localStorage), con script anti-flash nel `<head>`
 - Rifattorizzato tutto il colore in **variabili semantiche** (`globals.css`): `--panel-head`, `--grid`, `--grid-faint`, `--chart-grid`, `--chart-bg`, `--input-bg`, `--row-hover`, `--node-bg`, `--on-accent`, `--chart-text`, `--vol-*`, ecc. Sostituiti ~40 hex hardcoded nel CSS e ~40 negli SVG dei pannelli
