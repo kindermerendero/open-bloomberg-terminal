@@ -251,15 +251,8 @@ export default function MarkowitzPanel({ symbols }: Props) {
                   E(R)
                 </text>
 
-                {/* feasible region: shaded area + traced border + 2-asset ribs */}
-                {region && (
-                  <>
-                    <path d={region.fill} fill="var(--amber)" fillOpacity={0.07} stroke="var(--amber)" strokeOpacity={0.5} strokeWidth={1.2} strokeLinejoin="round" />
-                    {region.ribs.map((d, i) => (
-                      <path key={`rib-${i}`} d={d} fill="none" stroke="var(--amber)" strokeOpacity={0.22} strokeWidth={0.8} />
-                    ))}
-                  </>
-                )}
+                {/* feasible region: shaded area only (no outline) */}
+                {region && <path d={region.fill} fill="var(--amber)" fillOpacity={0.09} />}
                 {/* feasible region cloud */}
                 {result.cloud.filter(plot.inView).map((p, i) => (
                   <circle key={`c-${i}`} cx={plot.sx(p.vol)} cy={plot.sy(p.ret)} r={1.1} fill="var(--white)" opacity={0.35} />
@@ -361,9 +354,9 @@ export default function MarkowitzPanel({ symbols }: Props) {
               {allowShort
                 ? "Closed-form mean-variance frontier (Merton 1972) on annualized daily log returns, short selling allowed (Σwᵢ=1, no sign constraint)."
                 : "Long-only mean-variance frontier (w≥0, Σwᵢ=1) solved numerically by projected-gradient QP over a risk-aversion sweep."}{" "}
-              Amber curve = efficient frontier, shaded area = feasible region (boundary traced from
-              sampled portfolios, dots), cyan dashed = capital market line, GMV = global minimum
-              variance, TAN = max-Sharpe tangency. Squares are single assets colored by β risk class.
+              Amber curve = efficient frontier, shaded area = feasible region (dots = sampled
+              portfolios), cyan dashed = capital market line, GMV = global minimum variance, TAN =
+              max-Sharpe tangency. Squares are single assets colored by β risk class.
               Historical estimates — not investment advice.
             </p>
           </>
