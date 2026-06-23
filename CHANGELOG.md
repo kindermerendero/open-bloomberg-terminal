@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-06-23] — Markowitz: via i contorni della regione + fix 2-asset/short
+- Rimossi i **contorni** della regione di fattibilità (outline tracciato + stecche degli archi a 2 asset): resta solo l'area ombreggiata
+- Con **2 asset** l'insieme fattibile è una curva, non un'area → nessun fill (prima in modalità short appariva una banda rettangolare priva di senso)
+- Short selling con ≥3 asset: l'area ora riempie **tutta l'altezza** a destra dell'iperbole min-varianza (usando A/B/C/D), invece di una banda troncata al range dei rendimenti (`MarkowitzPanel.tsx`)
+
 ## [2026-06-23] — Fix: la tendina benchmark (CAPM/Markowitz) si chiudeva subito
 - Il `CommandBar` riportava il focus sulla command line a **ogni** click del documento → aprendo un `<select>` (benchmark CAPM, Markowitz, ecc.) il focus veniva rubato e la tendina si richiudeva istantaneamente, bloccando la selezione su S&P 500; disturbava anche gli input dei pannelli
 - Fix: il refocus salta i click su controlli di form (`input, select, textarea, option, label, [contenteditable]`). Verificato: dopo il click il focus resta sul select e la scelta del benchmark regge (`CommandBar.tsx`)
