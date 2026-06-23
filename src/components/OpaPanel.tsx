@@ -190,7 +190,7 @@ export default function OpaPanel({ symbol }: Props) {
         </div>
         <svg viewBox={`0 0 ${bar.W} ${bar.H}`} className="bond-svg">
           {/* track */}
-          <rect x={bar.x(0)} y={bar.yTop} width={bar.x(100) - bar.x(0)} height={bar.h} fill="#1a1200" />
+          <rect x={bar.x(0)} y={bar.yTop} width={bar.x(100) - bar.x(0)} height={bar.h} fill="var(--grid-faint)" />
           {/* already owned */}
           <rect x={bar.x(0)} y={bar.yTop} width={bar.x(currentPct) - bar.x(0)} height={bar.h} fill="var(--cyan)" opacity={0.7} />
           {/* being acquired */}
@@ -223,11 +223,11 @@ export default function OpaPanel({ symbol }: Props) {
               <span className="sub">X = STAKE % · Y = TOTAL COST</span>
             </div>
             <svg viewBox={`0 0 ${sens.W} ${sens.H}`} className="bond-svg">
-              <line x1={sens.m.l} y1={sens.H - sens.m.b} x2={sens.W - sens.m.r} y2={sens.H - sens.m.b} stroke="#3d2a00" />
-              <line x1={sens.m.l} y1={sens.m.t} x2={sens.m.l} y2={sens.H - sens.m.b} stroke="#3d2a00" />
+              <line x1={sens.m.l} y1={sens.H - sens.m.b} x2={sens.W - sens.m.r} y2={sens.H - sens.m.b} stroke="var(--grid)" />
+              <line x1={sens.m.l} y1={sens.m.t} x2={sens.m.l} y2={sens.H - sens.m.b} stroke="var(--grid)" />
               {[0, sens.yMax / 2, sens.yMax].map((t, i) => (
                 <g key={`cy-${i}`}>
-                  <line x1={sens.m.l} y1={sens.y(t)} x2={sens.W - sens.m.r} y2={sens.y(t)} stroke="#1a1200" />
+                  <line x1={sens.m.l} y1={sens.y(t)} x2={sens.W - sens.m.r} y2={sens.y(t)} stroke="var(--grid-faint)" />
                   <text x={sens.m.l - 6} y={sens.y(t) + 3} className="mkwz-axis" textAnchor="end">{fmtNum(t, 0)}</text>
                 </g>
               ))}

@@ -279,7 +279,7 @@ export default function IpoPanel() {
               <span className="sub">NET PROCEEDS vs MONEY LEFT · X = OFFER PRICE</span>
             </div>
             <svg viewBox={`0 0 ${sens.W} ${sens.H}`} className="bond-svg">
-              <line x1={sens.m.l} y1={sens.zeroY} x2={sens.W - sens.m.r} y2={sens.zeroY} stroke="#3d2a00" />
+              <line x1={sens.m.l} y1={sens.zeroY} x2={sens.W - sens.m.r} y2={sens.zeroY} stroke="var(--grid)" />
               <line x1={sens.fairX} y1={sens.m.t} x2={sens.fairX} y2={sens.H - sens.m.b} stroke="var(--text-dim)" strokeDasharray="3 3" />
               <text x={sens.fairX} y={sens.m.t + 9} className="mkwz-axis" textAnchor="middle">FAIR (no $ left)</text>
               <path d={sens.netPath} fill="none" stroke="var(--amber)" strokeWidth={1.8} />
@@ -301,8 +301,8 @@ export default function IpoPanel() {
               <span className="sub">CLEARING PRICE = WHERE DEMAND MEETS SHARES OFFERED</span>
             </div>
             <svg viewBox={`0 0 ${book.W} ${book.H}`} className="bond-svg">
-              <line x1={book.m.l} y1={book.H - book.m.b} x2={book.W - book.m.r} y2={book.H - book.m.b} stroke="#3d2a00" />
-              <line x1={book.m.l} y1={book.m.t} x2={book.m.l} y2={book.H - book.m.b} stroke="#3d2a00" />
+              <line x1={book.m.l} y1={book.H - book.m.b} x2={book.W - book.m.r} y2={book.H - book.m.b} stroke="var(--grid)" />
+              <line x1={book.m.l} y1={book.m.t} x2={book.m.l} y2={book.H - book.m.b} stroke="var(--grid)" />
               {/* shares offered (supply) */}
               <line x1={book.m.l} y1={book.supplyY} x2={book.W - book.m.r} y2={book.supplyY} stroke="var(--cyan)" strokeDasharray="4 2" />
               <text x={book.W - book.m.r} y={book.supplyY - 4} className="mkwz-axis" textAnchor="end" fill="var(--cyan)">SHARES OFFERED ({fmtNum(sharesM)}M)</text>

@@ -247,11 +247,11 @@ export default function RightsIssuePanel({ symbol }: Props) {
                   <span className="sub">EPS ↑ AS SHARES RETIRED · X = CASH (M)</span>
                 </div>
                 <svg viewBox={`0 0 ${accChart.W} ${accChart.H}`} className="bond-svg">
-                  <line x1={accChart.m.l} y1={accChart.H - accChart.m.b} x2={accChart.W - accChart.m.r} y2={accChart.H - accChart.m.b} stroke="#3d2a00" />
-                  <line x1={accChart.m.l} y1={accChart.m.t} x2={accChart.m.l} y2={accChart.H - accChart.m.b} stroke="#3d2a00" />
+                  <line x1={accChart.m.l} y1={accChart.H - accChart.m.b} x2={accChart.W - accChart.m.r} y2={accChart.H - accChart.m.b} stroke="var(--grid)" />
+                  <line x1={accChart.m.l} y1={accChart.m.t} x2={accChart.m.l} y2={accChart.H - accChart.m.b} stroke="var(--grid)" />
                   {[0, accChart.yMax / 2, accChart.yMax].map((t, i) => (
                     <g key={`ay-${i}`}>
-                      <line x1={accChart.m.l} y1={accChart.sy(t)} x2={accChart.W - accChart.m.r} y2={accChart.sy(t)} stroke="#1a1200" />
+                      <line x1={accChart.m.l} y1={accChart.sy(t)} x2={accChart.W - accChart.m.r} y2={accChart.sy(t)} stroke="var(--grid-faint)" />
                       <text x={accChart.m.l - 6} y={accChart.sy(t) + 3} className="mkwz-axis" textAnchor="end">
                         {fmtNum(t * 100, 0)}%
                       </text>

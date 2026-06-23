@@ -207,11 +207,11 @@ export default function CapmPanel({ symbol, quote }: Props) {
                   <span className="sub">α = ASSET RETURN − SML · β ON X</span>
                 </div>
                 <svg viewBox={`0 0 ${sml.W} ${sml.H}`} className="bond-svg">
-                  <line x1={sml.m.l} y1={sml.H - sml.m.b} x2={sml.W - sml.m.r} y2={sml.H - sml.m.b} stroke="#3d2a00" />
-                  <line x1={sml.m.l} y1={sml.m.t} x2={sml.m.l} y2={sml.H - sml.m.b} stroke="#3d2a00" />
+                  <line x1={sml.m.l} y1={sml.H - sml.m.b} x2={sml.W - sml.m.r} y2={sml.H - sml.m.b} stroke="var(--grid)" />
+                  <line x1={sml.m.l} y1={sml.m.t} x2={sml.m.l} y2={sml.H - sml.m.b} stroke="var(--grid)" />
                   {[sml.yMin, (sml.yMin + sml.yMax) / 2, sml.yMax].map((t, i) => (
                     <g key={`sy-${i}`}>
-                      <line x1={sml.m.l} y1={sml.sy(t)} x2={sml.W - sml.m.r} y2={sml.sy(t)} stroke="#1a1200" />
+                      <line x1={sml.m.l} y1={sml.sy(t)} x2={sml.W - sml.m.r} y2={sml.sy(t)} stroke="var(--grid-faint)" />
                       <text x={sml.m.l - 6} y={sml.sy(t) + 3} className="mkwz-axis" textAnchor="end">{fmtNum(t * 100, 0)}%</text>
                     </g>
                   ))}

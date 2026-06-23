@@ -226,11 +226,11 @@ export default function MarkowitzPanel({ symbols }: Props) {
             <div className="mkwz-grid">
               <svg viewBox={`0 0 ${plot.W} ${plot.H}`} className="mkwz-svg">
                 {/* axes */}
-                <line x1={plot.m.l} y1={plot.H - plot.m.b} x2={plot.W - plot.m.r} y2={plot.H - plot.m.b} stroke="#3d2a00" />
-                <line x1={plot.m.l} y1={plot.m.t} x2={plot.m.l} y2={plot.H - plot.m.b} stroke="#3d2a00" />
+                <line x1={plot.m.l} y1={plot.H - plot.m.b} x2={plot.W - plot.m.r} y2={plot.H - plot.m.b} stroke="var(--grid)" />
+                <line x1={plot.m.l} y1={plot.m.t} x2={plot.m.l} y2={plot.H - plot.m.b} stroke="var(--grid)" />
                 {xTicks.map((t, i) => (
                   <g key={`xt-${i}`}>
-                    <line x1={plot.sx(t)} y1={plot.m.t} x2={plot.sx(t)} y2={plot.H - plot.m.b} stroke="#1a1200" />
+                    <line x1={plot.sx(t)} y1={plot.m.t} x2={plot.sx(t)} y2={plot.H - plot.m.b} stroke="var(--grid-faint)" />
                     <text x={plot.sx(t)} y={plot.H - plot.m.b + 16} className="mkwz-axis" textAnchor="middle">
                       {fmtNum(t * 100, 0)}%
                     </text>
@@ -238,7 +238,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
                 ))}
                 {yTicks.map((t, i) => (
                   <g key={`yt-${i}`}>
-                    <line x1={plot.m.l} y1={plot.sy(t)} x2={plot.W - plot.m.r} y2={plot.sy(t)} stroke="#1a1200" />
+                    <line x1={plot.m.l} y1={plot.sy(t)} x2={plot.W - plot.m.r} y2={plot.sy(t)} stroke="var(--grid-faint)" />
                     <text x={plot.m.l - 6} y={plot.sy(t) + 3} className="mkwz-axis" textAnchor="end">
                       {fmtNum(t * 100, 0)}%
                     </text>

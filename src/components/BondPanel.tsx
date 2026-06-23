@@ -268,11 +268,11 @@ export default function BondPanel() {
             </div>
 
             <svg viewBox={`0 0 ${plot.W} ${plot.H}`} className="bond-svg">
-              <line x1={plot.m.l} y1={plot.H - plot.m.b} x2={plot.W - plot.m.r} y2={plot.H - plot.m.b} stroke="#3d2a00" />
-              <line x1={plot.m.l} y1={plot.m.t} x2={plot.m.l} y2={plot.H - plot.m.b} stroke="#3d2a00" />
+              <line x1={plot.m.l} y1={plot.H - plot.m.b} x2={plot.W - plot.m.r} y2={plot.H - plot.m.b} stroke="var(--grid)" />
+              <line x1={plot.m.l} y1={plot.m.t} x2={plot.m.l} y2={plot.H - plot.m.b} stroke="var(--grid)" />
               {[plot.yMin, (plot.yMin + plot.yMax) / 2, plot.yMax].map((t, i) => (
                 <g key={`gy-${i}`}>
-                  <line x1={plot.m.l} y1={plot.sy(t)} x2={plot.W - plot.m.r} y2={plot.sy(t)} stroke="#1a1200" />
+                  <line x1={plot.m.l} y1={plot.sy(t)} x2={plot.W - plot.m.r} y2={plot.sy(t)} stroke="var(--grid-faint)" />
                   <text x={plot.m.l - 6} y={plot.sy(t) + 3} className="mkwz-axis" textAnchor="end">
                     {fmtNum(t, 1)}%
                   </text>
@@ -322,7 +322,7 @@ export default function BondPanel() {
                   <span className="hint">red = inverted (10Y &lt; 2Y) · recession signal</span>
                 </div>
                 <svg viewBox={`0 0 ${spark.W} ${spark.H}`} className="bond-svg">
-                  <line x1={spark.m.l} y1={spark.zeroY} x2={spark.W - spark.m.r} y2={spark.zeroY} stroke="#3d2a00" strokeDasharray="2 2" />
+                  <line x1={spark.m.l} y1={spark.zeroY} x2={spark.W - spark.m.r} y2={spark.zeroY} stroke="var(--grid)" strokeDasharray="2 2" />
                   <text x={spark.m.l - 6} y={spark.zeroY + 3} className="mkwz-axis" textAnchor="end">0</text>
                   <text x={spark.m.l - 6} y={spark.sy(spark.yMax) + 3} className="mkwz-axis" textAnchor="end">
                     {fmtNum(spark.yMax * 100, 0)}

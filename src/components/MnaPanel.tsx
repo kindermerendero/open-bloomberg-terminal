@@ -139,7 +139,7 @@ export default function MnaPanel() {
           <span className="sub">SYNERGY − PREMIUM = ACQUIRER NPV</span>
         </div>
         <svg viewBox={`0 0 ${bridge.W} ${bridge.H}`} className="bond-svg">
-          <line x1={bridge.m.l} y1={bridge.zeroY} x2={bridge.W - bridge.m.r} y2={bridge.zeroY} stroke="#3d2a00" />
+          <line x1={bridge.m.l} y1={bridge.zeroY} x2={bridge.W - bridge.m.r} y2={bridge.zeroY} stroke="var(--grid)" />
           {bridge.connectors.map((c, i) => (
             <line key={`cn-${i}`} x1={c.x1} y1={c.y} x2={c.x2} y2={c.y} stroke="var(--text-dim)" strokeDasharray="3 3" />
           ))}

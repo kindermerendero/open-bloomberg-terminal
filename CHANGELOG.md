@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-06-23] — Tema chiaro/scuro + sistema di variabili colore completo
+- Introdotti **due temi**: scuro (ambra-su-nero stile Bloomberg, invariato) e **chiaro "carta calda"** (crema/avorio, testo marrone scuro, ambra scurita come accento). Selezione **automatica via `prefers-color-scheme`** + **toggle manuale** nell'header (AUTO → DARK → LIGHT, salvato in localStorage), con script anti-flash nel `<head>`
+- Rifattorizzato tutto il colore in **variabili semantiche** (`globals.css`): `--panel-head`, `--grid`, `--grid-faint`, `--chart-grid`, `--chart-bg`, `--input-bg`, `--row-hover`, `--node-bg`, `--on-accent`, `--chart-text`, `--vol-*`, ecc. Sostituiti ~40 hex hardcoded nel CSS e ~40 negli SVG dei pannelli
+- `ChartPanel` (lightweight-charts) reso theme-reactive: legge le CSS var via `getComputedStyle` e riapplica i colori al cambio tema con un `MutationObserver` su `data-theme`
+- L'effetto CRT (scanline/vignette) è disattivato nel tema chiaro
+- Nuovo componente `ThemeToggle.tsx`; `layout.tsx` con init pre-paint e `data-theme` di default
+
 ## [2026-06-22] — OV: albero binomiale più visibile
 - I rami del lattice CRR erano `#3d2a00` (quasi neri su sfondo nero) → schiariti a `var(--amber-dim)` opacità 0.55; aggiunto un marker circolare su ogni nodo (rosso dove l'esercizio anticipato è ottimale), con offset del testo allargati così il nodo sta pulito tra prezzo e valore (`LatticePanel.tsx`)
 

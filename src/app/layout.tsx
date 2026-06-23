@@ -14,9 +14,15 @@ export const metadata: Metadata = {
     "Open source Bloomberg-style financial terminal powered exclusively by free data sources.",
 };
 
+// runs before paint to set the theme (stored override, else OS preference) → no flash
+const themeInit = `(function(){try{var s=localStorage.getItem('opnb-theme');var t=(s==='light'||s==='dark')?s:(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+      </head>
       <body className={`${plexMono.variable} crt`}>{children}</body>
     </html>
   );

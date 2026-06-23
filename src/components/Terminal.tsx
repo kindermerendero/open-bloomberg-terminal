@@ -17,6 +17,7 @@ import BondPanel from "./BondPanel";
 import EquityValuationPanel from "./EquityValuationPanel";
 import MnaPanel from "./MnaPanel";
 import RightsIssuePanel from "./RightsIssuePanel";
+import ThemeToggle from "./ThemeToggle";
 import IpoPanel from "./IpoPanel";
 import OpaPanel from "./OpaPanel";
 
@@ -418,7 +419,10 @@ export default function Terminal() {
           {clock.split("|")[0]}
           <span className="utc">{clock.split("|")[1]}</span>
         </span>
-        <span className="live">LIVE</span>
+        <span className="header-right">
+          <ThemeToggle />
+          <span className="live">LIVE</span>
+        </span>
       </div>
 
       <CommandBar onCommand={handleCommand} message={message} isError={isError} />

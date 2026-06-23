@@ -259,7 +259,7 @@ export default function LatticePanel({ symbol, quote }: Props) {
                           cx={nodeX(i)}
                           cy={nodeY(i, j)}
                           r={2.6}
-                          fill="#120c00"
+                          fill="var(--node-bg)"
                           stroke={node.ex ? "var(--down)" : "var(--amber)"}
                           strokeWidth={1}
                         />

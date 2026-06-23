@@ -1,18 +1,64 @@
-:root {
+:root,
+[data-theme="dark"] {
   --bg: #000000;
   --panel-bg: #050300;
+  --panel-head: #140d00;
+  --border: #3d2a00;
+  --grid: #3d2a00;
+  --grid-faint: #1a1200;
+  --chart-grid: #160f00;
+  --chart-bg: #030200;
+  --input-bg: #0a0600;
+  --row-hover: #1f1400;
+  --node-bg: #120c00;
+  --scroll-track: #0a0700;
+  --text: #e8e0d0;
+  --text-dim: #8a8070;
+  --white: #ffffff;
   --amber: #ff9d00;
   --amber-dim: #b36e00;
   --amber-glow: rgba(255, 157, 0, 0.35);
-  --border: #3d2a00;
-  --text: #e8e0d0;
-  --text-dim: #8a8070;
+  --on-accent: #000000;
   --up: #00d96a;
   --down: #ff3b30;
   --cyan: #2fd5e0;
   --yellow: #ffe600;
-  --white: #ffffff;
+  --chart-text: #b36e00;
+  --vol-base: rgba(255, 157, 0, 0.25);
+  --vol-up: rgba(0, 217, 106, 0.25);
+  --vol-dn: rgba(255, 59, 48, 0.25);
   --font-mono: var(--font-plex), "IBM Plex Mono", "Menlo", monospace;
+}
+
+/* light theme — warm paper (cream/ivory, amber kept as a darker accent) */
+[data-theme="light"] {
+  --bg: #f4ece0;
+  --panel-bg: #fbf6ee;
+  --panel-head: #ece0cc;
+  --border: #d9c7a8;
+  --grid: #c9b489;
+  --grid-faint: #e6d9c2;
+  --chart-grid: #e6d9c2;
+  --chart-bg: #fbf6ee;
+  --input-bg: #fffaf2;
+  --row-hover: #f0e6d4;
+  --node-bg: #fbf6ee;
+  --scroll-track: #ece0cc;
+  --text: #2a2018;
+  --text-dim: #7a6f5e;
+  --white: #1a120a;
+  --amber: #c06f00;
+  --amber-dim: #9a5a00;
+  --amber-glow: rgba(192, 111, 0, 0.25);
+  --on-accent: #fff7ea;
+  --up: #0a8a48;
+  --down: #c62828;
+  --cyan: #0e7c9c;
+  --yellow: #a67c00;
+  --chart-text: #9a5a00;
+  --vol-base: rgba(192, 111, 0, 0.22);
+  --vol-up: rgba(10, 138, 72, 0.28);
+  --vol-dn: rgba(198, 40, 40, 0.28);
 }
 
 * {
@@ -34,7 +80,7 @@ body {
 
 ::selection {
   background: var(--amber);
-  color: #000;
+  color: var(--on-accent);
 }
 
 ::-webkit-scrollbar {
@@ -42,7 +88,7 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0700;
+  background: var(--scroll-track);
 }
 ::-webkit-scrollbar-thumb {
   background: var(--amber-dim);
@@ -70,6 +116,11 @@ body {
   pointer-events: none;
   z-index: 101;
   background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.45) 100%);
+}
+/* the CRT scanlines/vignette only make sense on the dark theme */
+[data-theme="light"] .crt::before,
+[data-theme="light"] .crt::after {
+  content: none;
 }
 
 .terminal {
@@ -117,6 +168,27 @@ body {
   margin-right: 5px;
   animation: blink 1.6s steps(1) infinite;
 }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.theme-toggle:hover {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: var(--on-accent);
+}
 
 /* ---------- command bar ---------- */
 .cmdbar {
@@ -125,7 +197,7 @@ body {
   align-items: center;
   gap: 8px;
   border: 1px solid var(--amber-dim);
-  background: #0a0600;
+  background: var(--input-bg);
   padding: 5px 8px;
   flex: 0 0 auto;
 }
@@ -148,13 +220,13 @@ body {
   caret-color: var(--amber);
 }
 .cmdbar input::placeholder {
-  color: #5a4a20;
+  color: var(--text-dim);
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
 }
 .cmdbar .go {
-  color: #000;
+  color: var(--on-accent);
   background: var(--up);
   font-weight: 700;
   padding: 1px 8px;
@@ -178,7 +250,7 @@ body {
   left: 0;
   right: 0;
   z-index: 50;
-  background: #0a0600;
+  background: var(--input-bg);
   border: 1px solid var(--amber-dim);
   border-top: none;
   max-height: 280px;
@@ -190,18 +262,18 @@ body {
   gap: 8px;
   padding: 4px 8px;
   cursor: pointer;
-  border-bottom: 1px solid #1a1000;
+  border-bottom: 1px solid var(--grid-faint);
 }
 .suggestions .row.active,
 .suggestions .row:hover {
   background: var(--amber);
-  color: #000;
+  color: var(--on-accent);
 }
 .suggestions .row.active .sym,
 .suggestions .row:hover .sym,
 .suggestions .row.active .meta,
 .suggestions .row:hover .meta {
-  color: #000;
+  color: var(--on-accent);
 }
 .suggestions .sym {
   color: var(--yellow);
@@ -247,7 +319,7 @@ body {
   justify-content: space-between;
   align-items: center;
   background: var(--amber);
-  color: #000;
+  color: var(--on-accent);
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 1.5px;
@@ -313,7 +385,7 @@ body {
 .quote-grid .cell {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px dotted #221700;
+  border-bottom: 1px dotted var(--grid-faint);
   padding: 2px 0;
 }
 .quote-grid .k {
@@ -356,7 +428,7 @@ body {
 }
 .range-bar button.active {
   background: var(--amber);
-  color: #000;
+  color: var(--on-accent);
 }
 
 /* ---------- tables ---------- */
@@ -367,7 +439,7 @@ table.data {
 table.data th {
   position: sticky;
   top: 0;
-  background: #140d00;
+  background: var(--panel-head);
   color: var(--amber);
   font-size: 10px;
   font-weight: 700;
@@ -384,7 +456,7 @@ table.data td:first-child {
 table.data td {
   padding: 3px 8px;
   text-align: right;
-  border-bottom: 1px solid #120c00;
+  border-bottom: 1px solid var(--grid-faint);
   color: var(--white);
   white-space: nowrap;
 }
@@ -392,7 +464,7 @@ table.data tr.clickable {
   cursor: pointer;
 }
 table.data tr.clickable:hover td {
-  background: #1f1400;
+  background: var(--row-hover);
 }
 table.data td.sym {
   color: var(--yellow);
@@ -420,7 +492,7 @@ table.sens td {
 table.sens thead th,
 table.sens tbody th {
   color: var(--amber);
-  background: #0a0600;
+  background: var(--input-bg);
   font-weight: 600;
 }
 table.sens td.cur {
@@ -433,12 +505,12 @@ table.sens td.cur {
 .news-item {
   display: block;
   padding: 5px 8px;
-  border-bottom: 1px solid #120c00;
+  border-bottom: 1px solid var(--grid-faint);
   text-decoration: none;
   cursor: pointer;
 }
 .news-item:hover {
-  background: #1f1400;
+  background: var(--row-hover);
 }
 .news-item .meta {
   font-size: 10px;
@@ -503,7 +575,7 @@ table.sens td.cur {
 }
 .controls input,
 .controls select {
-  background: #0a0600;
+  background: var(--input-bg);
   border: 1px solid var(--border);
   color: var(--yellow);
   font-family: var(--font-mono);
@@ -537,7 +609,7 @@ table.sens td.cur {
 }
 .controls .seg button.active {
   background: var(--amber);
-  color: #000;
+  color: var(--on-accent);
 }
 
 .stat-callout {
@@ -622,7 +694,7 @@ table.sens td.cur {
 }
 .cattabs button.active {
   background: var(--amber);
-  color: #000;
+  color: var(--on-accent);
   border-color: var(--amber);
 }
 .fkeys {
@@ -651,16 +723,16 @@ table.sens td.cur {
 }
 .fkeys button.active {
   background: var(--amber);
-  color: #000;
+  color: var(--on-accent);
 }
 .fkeys .fk {
   background: var(--amber-dim);
-  color: #000;
+  color: var(--on-accent);
   padding: 0 5px;
   font-weight: 700;
 }
 .fkeys button.active .fk {
-  background: #000;
+  background: var(--on-accent);
   color: var(--amber);
 }
 
@@ -706,7 +778,7 @@ table.sens td.cur {
   width: 100%;
   height: auto;
   border: 1px solid var(--border);
-  background: #030200;
+  background: var(--chart-bg);
 }
 .mkwz-axis {
   fill: var(--text-dim);
@@ -759,7 +831,7 @@ table.sens td.cur {
   text-align: right;
   color: var(--text);
   padding: 3px 8px;
-  border-bottom: 1px solid #1a1200;
+  border-bottom: 1px solid var(--grid-faint);
 }
 .mkwz-table td:first-child {
   text-align: left;
@@ -772,7 +844,7 @@ table.sens td.cur {
   height: auto;
   margin: 6px 10px;
   border: 1px solid var(--border);
-  background: #030200;
+  background: var(--chart-bg);
 }
 .bond-curvehdr {
   display: flex;

@@ -6,7 +6,7 @@ Terminale finanziario open source stile Bloomberg, web-based, collegato esclusiv
 - Next.js 15 (App Router) + TypeScript
 - lightweight-charts (TradingView OSS) per i grafici candlestick
 - rss-parser per il feed news
-- CSS custom (niente framework) — estetica Bloomberg: sfondo nero, testo ambra, layout denso
+- CSS custom (niente framework) — estetica Bloomberg: layout denso. **Due temi** via variabili semantiche in `globals.css` (`:root`/`[data-theme="dark"]` = ambra-su-nero; `[data-theme="light"]` = carta calda crema). Selezione auto da `prefers-color-scheme` + toggle manuale (`ThemeToggle.tsx`, AUTO/DARK/LIGHT in localStorage). Init anti-flash in `layout.tsx`. Tutti i colori (CSS + SVG dei pannelli) usano `var(--...)`; `ChartPanel` legge le var via `getComputedStyle` e si ri-tematizza con `MutationObserver` su `data-theme`. **Regola: mai colori hardcoded, sempre variabili semantiche**
 
 ## Fonti dati (tutte gratuite, nessuna API key)
 - **Yahoo Finance** (endpoint pubblici `query1.finance.yahoo.com`) — quote, storico OHLCV, ricerca ticker
