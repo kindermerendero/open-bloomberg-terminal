@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Candle } from "@/lib/types";
 import { alignMany, markowitz, type FrontierResult, type RiskClass } from "@/lib/quant";
 import { fmtNum, fmtPct } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 const BENCHMARKS: Array<[string, string]> = [
   ["^GSPC", "S&P 500"],
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export default function MarkowitzPanel({ symbols }: Props) {
+  const { t } = useLang();
   const [benchmark, setBenchmark] = useState("^GSPC");
   const [allowShort, setAllowShort] = useState(true);
   const [rfPct, setRfPct] = useState<number | null>(null);
@@ -169,10 +171,8 @@ export default function MarkowitzPanel({ symbols }: Props) {
   if (symbols.length < 2) {
     return (
       <div className="panel" style={{ flex: "1 1 auto" }}>
-        <div className="panel-title">Markowitz — Mean-Variance Frontier</div>
-        <div className="empty">
-          Enter a portfolio — e.g. MKWZ AAPL,MSFT,NVDA,JPM,XOM (min 2 tickers)
-        </div>
+        <div className="panel-title">{t("mkwz.titleEmpty")}</div>
+        <div className="empty">{t("mkwz.empty")}</div>
       </div>
     );
   }
@@ -187,11 +187,11 @@ export default function MarkowitzPanel({ symbols }: Props) {
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
         Markowitz — {symbols.join(" / ")}
-        <span className="sub">DAILY LOG RETURNS, 1Y · {allowShort ? "SHORT ALLOWED" : "LONG ONLY"}</span>
+        <span className="sub">{allowShort ? t("mkwz.subShort") : t("mkwz.subLong")}</span>
       </div>
       <div className="controls">
         <label>
-          BENCHMARK (β)
+          {t("mkwz.benchmark")}
           <select value={benchmark} onChange={(e) => setBenchmark(e.target.value)}>
             {BENCHMARKS.map(([sym, name]) => (
               <option key={sym} value={sym}>
@@ -201,7 +201,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
           </select>
         </label>
         <label>
-          RISK-FREE %
+          {t("mkwz.riskFree")}
           <input
             type="number"
             step="0.05"
@@ -209,22 +209,22 @@ export default function MarkowitzPanel({ symbols }: Props) {
             onChange={(e) => setRfPct(parseFloat(e.target.value) || 0)}
           />
         </label>
-        <span className="hint">rf default = 13W T-BILL (^IRX)</span>
+        <span className="hint">{t("mkwz.rfHint")}</span>
         <label>
-          SHORT SELLING
+          {t("mkwz.shortSelling")}
           <div className="seg">
             <button className={allowShort ? "active" : ""} onClick={() => setAllowShort(true)}>
-              ALLOWED
+              {t("mkwz.allowed")}
             </button>
             <button className={!allowShort ? "active" : ""} onClick={() => setAllowShort(false)}>
-              LONG ONLY
+              {t("mkwz.longOnly")}
             </button>
           </div>
         </label>
       </div>
       <div className="panel-body">
-        {loading && <div className="loading">OPTIMIZING…</div>}
-        {error && <div className="empty">ERR: {error}</div>}
+        {loading && <div className="loading">{t("common.optimizing")}</div>}
+        {error && <div className="empty">{t("common.err")}: {error}</div>}
         {result && plot && !loading && (
           <>
             <div className="mkwz-grid">
@@ -249,7 +249,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
                   </g>
                 ))}
                 <text x={plot.W / 2} y={plot.H - 4} className="mkwz-axis" textAnchor="middle">
-                  RISK σ (ann. volatility)
+                  {t("mkwz.axisRisk")}
                 </text>
                 <text x={14} y={plot.m.t + 6} className="mkwz-axis">
                   E(R)
@@ -298,31 +298,31 @@ export default function MarkowitzPanel({ symbols }: Props) {
 
               <div className="mkwz-side">
                 <div className="stat-callout">
-                  <span className="k">TANGENCY SHARPE</span>
+                  <span className="k">{t("mkwz.tanSharpe")}</span>
                   <span className="v">{result.tangency ? fmtNum(result.tangency.sharpe, 3) : "—"}</span>
                 </div>
                 <div className="quote-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
                   <div className="cell">
-                    <span className="k">GMV RET</span>
+                    <span className="k">{t("mkwz.gmvRet")}</span>
                     <span className="v">{fmtPct(result.gmv.ret * 100)}</span>
                   </div>
                   <div className="cell">
-                    <span className="k">GMV VOL</span>
+                    <span className="k">{t("mkwz.gmvVol")}</span>
                     <span className="v">{fmtPct(result.gmv.vol * 100)}</span>
                   </div>
                   <div className="cell">
-                    <span className="k">TAN RET</span>
+                    <span className="k">{t("mkwz.tanRet")}</span>
                     <span className="v">{result.tangency ? fmtPct(result.tangency.ret * 100) : "—"}</span>
                   </div>
                   <div className="cell">
-                    <span className="k">TAN VOL</span>
+                    <span className="k">{t("mkwz.tanVol")}</span>
                     <span className="v">{result.tangency ? fmtPct(result.tangency.vol * 100) : "—"}</span>
                   </div>
                 </div>
                 <div className="mkwz-legend">
-                  <span><i style={{ background: RISK_COLOR.LOW }} /> LOW β&lt;0.8</span>
-                  <span><i style={{ background: RISK_COLOR.MID }} /> MID 0.8–1.2</span>
-                  <span><i style={{ background: RISK_COLOR.HIGH }} /> HIGH β&gt;1.2</span>
+                  <span><i style={{ background: RISK_COLOR.LOW }} /> {t("mkwz.legendLow")}</span>
+                  <span><i style={{ background: RISK_COLOR.MID }} /> {t("mkwz.legendMid")}</span>
+                  <span><i style={{ background: RISK_COLOR.HIGH }} /> {t("mkwz.legendHigh")}</span>
                 </div>
               </div>
             </div>
@@ -331,13 +331,13 @@ export default function MarkowitzPanel({ symbols }: Props) {
             <table className="mkwz-table">
               <thead>
                 <tr>
-                  <th>TICKER</th>
+                  <th>{t("mkwz.thTicker")}</th>
                   <th>E(R)</th>
                   <th>σ</th>
                   <th>β</th>
-                  <th>CLASS</th>
-                  <th>w GMV</th>
-                  <th>w TAN</th>
+                  <th>{t("mkwz.thClass")}</th>
+                  <th>{t("mkwz.thwGmv")}</th>
+                  <th>{t("mkwz.thwTan")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -355,13 +355,8 @@ export default function MarkowitzPanel({ symbols }: Props) {
               </tbody>
             </table>
             <p className="note" style={{ padding: "0 10px 10px" }}>
-              {allowShort
-                ? "Closed-form mean-variance frontier (Merton 1972) on annualized daily log returns, short selling allowed (Σwᵢ=1, no sign constraint)."
-                : "Long-only mean-variance frontier (w≥0, Σwᵢ=1) solved numerically by projected-gradient QP over a risk-aversion sweep."}{" "}
-              Amber curve = efficient frontier, shaded area = feasible region (dots = sampled
-              portfolios), cyan dashed = capital market line, GMV = global minimum variance, TAN =
-              max-Sharpe tangency. Squares are single assets colored by β risk class.
-              Historical estimates — not investment advice.
+              {allowShort ? t("mkwz.noteShort") : t("mkwz.noteLong")}{" "}
+              {t("mkwz.noteTail")}
             </p>
           </>
         )}

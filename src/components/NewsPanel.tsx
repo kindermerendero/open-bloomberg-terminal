@@ -2,6 +2,7 @@
 
 import type { NewsItem } from "@/lib/types";
 import { fmtAgo } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 interface Props {
   items: NewsItem[];
@@ -11,15 +12,16 @@ interface Props {
 }
 
 export default function NewsPanel({ items, loading, symbol, grow }: Props) {
+  const { t, lang } = useLang();
   return (
     <div className="panel" style={grow ? { flex: "1 1 auto" } : { flex: "1 1 55%" }}>
       <div className="panel-title">
-        News {symbol ? `— ${symbol}` : "— Top Stories"} <span className="sub">N</span>
+        {t("news.title")} {symbol ? `— ${symbol}` : `— ${t("news.top")}`} <span className="sub">N</span>
       </div>
       <div className="panel-body">
         {items.length === 0 ? (
           <div className={loading ? "loading" : "empty"}>
-            {loading ? "LOADING…" : "No headlines available"}
+            {loading ? t("common.loading") : t("news.empty")}
           </div>
         ) : (
           items.map((item, i) => (
@@ -32,7 +34,7 @@ export default function NewsPanel({ items, loading, symbol, grow }: Props) {
             >
               <div className="meta">
                 <span className="src">{item.source}</span>
-                {fmtAgo(item.pubDate)}
+                {fmtAgo(item.pubDate, lang)}
               </div>
               <div className="headline">{item.title}</div>
             </a>

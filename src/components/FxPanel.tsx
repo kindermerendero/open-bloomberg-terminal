@@ -2,6 +2,7 @@
 
 import type { FxRate } from "@/lib/types";
 import { fmtNum, fmtPct, signClass } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 interface Props {
   rates: FxRate[];
@@ -10,24 +11,25 @@ interface Props {
 }
 
 export default function FxPanel({ rates, loading, date }: Props) {
+  const { t } = useLang();
   return (
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
-        FX Monitor — ECB Reference Rates <span className="sub">{date}</span>
+        {t("fx.title")} <span className="sub">{date}</span>
       </div>
       <div className="panel-body">
         {rates.length === 0 ? (
           <div className={loading ? "loading" : "empty"}>
-            {loading ? "LOADING…" : "No FX data available"}
+            {loading ? t("common.loading") : t("fx.empty")}
           </div>
         ) : (
           <table className="data">
             <thead>
               <tr>
-                <th>Pair</th>
-                <th>Rate</th>
-                <th>Prev</th>
-                <th>Chg%</th>
+                <th>{t("fx.pair")}</th>
+                <th>{t("fx.rate")}</th>
+                <th>{t("fx.prev")}</th>
+                <th>{t("fx.chg")}</th>
               </tr>
             </thead>
             <tbody>

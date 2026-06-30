@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { SearchResult } from "@/lib/types";
+import { useLang } from "@/lib/i18n";
 
 interface Props {
   onCommand: (cmd: string) => void;
@@ -13,6 +14,7 @@ const KNOWN_COMMANDS =
   /^(HELP|FX|CRY|SEC|N|W|CAPM|OV|EQV|DDM|MNA|RGT|IPO|OPA|BOND|YC|GOVT|MKWZ|PORT|RIGHTS|BUYBACK|TENDER|1D|5D|1M|6M|1Y|5Y|MAX|ADD\s|DEL\s)/i;
 
 export default function CommandBar({ onCommand, message, isError }: Props) {
+  const { t } = useLang();
   const [value, setValue] = useState("");
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [activeIdx, setActiveIdx] = useState(-1);
@@ -94,12 +96,12 @@ export default function CommandBar({ onCommand, message, isError }: Props) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Enter ticker or command — HELP for the full list"
+        placeholder={t("cmdbar.placeholder")}
         spellCheck={false}
         autoComplete="off"
       />
       {message && <span className={`msg${isError ? " err" : ""}`}>{message}</span>}
-      <span className="go">GO ⏎</span>
+      <span className="go">{t("cmdbar.go")}</span>
       {suggestions.length > 0 && (
         <div className="suggestions">
           {suggestions.map((s, i) => (

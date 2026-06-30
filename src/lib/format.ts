@@ -34,12 +34,13 @@ export function signClass(n: number | null | undefined): string {
   return n > 0 ? "up" : "down";
 }
 
-export function fmtAgo(ts: number): string {
+export function fmtAgo(ts: number, lang: "en" | "it" = "en"): string {
   if (!ts) return "";
   const mins = Math.floor((Date.now() - ts) / 60000);
-  if (mins < 1) return "now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return lang === "it" ? "ora" : "now";
+  if (mins < 60) return lang === "it" ? `${mins}m fa` : `${mins}m ago`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+  if (hours < 24) return lang === "it" ? `${hours}h fa` : `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return lang === "it" ? `${days}g fa` : `${days}d ago`;
 }

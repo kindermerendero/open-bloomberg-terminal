@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Candle, Quote } from "@/lib/types";
 import { capmStats, type CapmStats } from "@/lib/quant";
 import { fmtNum, fmtPct, signClass } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 const BENCHMARKS: Array<[string, string]> = [
   ["^GSPC", "S&P 500"],
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function CapmPanel({ symbol, quote }: Props) {
+  const { t } = useLang();
   const [benchmark, setBenchmark] = useState("^GSPC");
   const [rfPct, setRfPct] = useState<number | null>(null);
   const [stats, setStats] = useState<CapmStats | null>(null);
@@ -81,8 +83,8 @@ export default function CapmPanel({ symbol, quote }: Props) {
   if (!symbol) {
     return (
       <div className="panel" style={{ flex: "1 1 auto" }}>
-        <div className="panel-title">CAPM — Asset Pricing</div>
-        <div className="empty">Load a security first — e.g. AAPL CAPM</div>
+        <div className="panel-title">{t("capm.titleEmpty")}</div>
+        <div className="empty">{t("capm.loadFirst")}</div>
       </div>
     );
   }
@@ -91,10 +93,10 @@ export default function CapmPanel({ symbol, quote }: Props) {
     stats == null
       ? ""
       : stats.alphaAnn > 0.005
-        ? "ABOVE SML — POSITIVE ALPHA (UNDERVALUED vs CAPM)"
+        ? t("capm.smlAbove")
         : stats.alphaAnn < -0.005
-          ? "BELOW SML — NEGATIVE ALPHA (OVERVALUED vs CAPM)"
-          : "ON THE SML — FAIRLY PRICED vs CAPM";
+          ? t("capm.smlBelow")
+          : t("capm.smlOn");
 
   // Security Market Line geometry: x = β, y = expected return. The asset's actual
   // return sits above/below the line by Jensen's alpha.
@@ -121,11 +123,11 @@ export default function CapmPanel({ symbol, quote }: Props) {
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
         CAPM — {symbol} {quote ? `@ ${fmtNum(quote.price)}` : ""}
-        <span className="sub">DAILY LOG RETURNS, 1Y</span>
+        <span className="sub">{t("capm.sub")}</span>
       </div>
       <div className="controls">
         <label>
-          BENCHMARK
+          {t("capm.benchmark")}
           <select value={benchmark} onChange={(e) => setBenchmark(e.target.value)}>
             {BENCHMARKS.map(([sym, name]) => (
               <option key={sym} value={sym}>
@@ -135,7 +137,7 @@ export default function CapmPanel({ symbol, quote }: Props) {
           </select>
         </label>
         <label>
-          RISK-FREE %
+          {t("capm.riskFree")}
           <input
             type="number"
             step="0.05"
@@ -143,68 +145,68 @@ export default function CapmPanel({ symbol, quote }: Props) {
             onChange={(e) => setRfPct(parseFloat(e.target.value) || 0)}
           />
         </label>
-        <span className="hint">rf default = 13W T-BILL (^IRX)</span>
+        <span className="hint">{t("capm.rfHint")}</span>
       </div>
       <div className="panel-body">
-        {loading && <div className="loading">COMPUTING…</div>}
-        {error && <div className="empty">ERR: {error}</div>}
+        {loading && <div className="loading">{t("common.computing")}</div>}
+        {error && <div className="empty">{t("common.err")}: {error}</div>}
         {stats && !loading && (
           <>
             <div className="stat-callout">
-              <span className="k">E(R) CAPM = rf + β·(E(Rm) − rf)</span>
+              <span className="k">{t("capm.erFormula")}</span>
               <span className={`v ${signClass(stats.erCapm)}`}>{fmtPct(stats.erCapm * 100)}</span>
             </div>
             <div className="quote-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
               <div className="cell">
-                <span className="k">BETA (β)</span>
+                <span className="k">{t("capm.beta")}</span>
                 <span className="v">{fmtNum(stats.beta, 3)}</span>
               </div>
               <div className="cell">
-                <span className="k">JENSEN ALPHA (ann.)</span>
+                <span className="k">{t("capm.alpha")}</span>
                 <span className={`v ${signClass(stats.alphaAnn)}`}>
                   {fmtPct(stats.alphaAnn * 100)}
                 </span>
               </div>
               <div className="cell">
-                <span className="k">R²</span>
+                <span className="k">{t("capm.r2")}</span>
                 <span className="v">{fmtNum(stats.r2, 3)}</span>
               </div>
               <div className="cell">
-                <span className="k">CORRELATION (ρ)</span>
+                <span className="k">{t("capm.corr")}</span>
                 <span className="v">{fmtNum(stats.corr, 3)}</span>
               </div>
               <div className="cell">
-                <span className="k">VOL {symbol} (ann.)</span>
+                <span className="k">{t("capm.volAsset", { sym: symbol })}</span>
                 <span className="v">{fmtPct(stats.volAsset * 100)}</span>
               </div>
               <div className="cell">
-                <span className="k">VOL BENCH (ann.)</span>
+                <span className="k">{t("capm.volBench")}</span>
                 <span className="v">{fmtPct(stats.volBench * 100)}</span>
               </div>
               <div className="cell">
-                <span className="k">E(Rm) HIST (ann.)</span>
+                <span className="k">{t("capm.erMarket")}</span>
                 <span className={`v ${signClass(stats.erMarket)}`}>
                   {fmtPct(stats.erMarket * 100)}
                 </span>
               </div>
               <div className="cell">
-                <span className="k">RISK-FREE</span>
+                <span className="k">{t("capm.rf")}</span>
                 <span className="v">{fmtPct(stats.rf * 100)}</span>
               </div>
               <div className="cell">
-                <span className="k">SHARPE (hist)</span>
+                <span className="k">{t("capm.sharpe")}</span>
                 <span className="v">{fmtNum(stats.sharpe, 2)}</span>
               </div>
               <div className="cell">
-                <span className="k">OBSERVATIONS</span>
+                <span className="k">{t("capm.obs")}</span>
                 <span className="v">{stats.n}</span>
               </div>
             </div>
             {sml && (
               <>
                 <div className="panel-title" style={{ marginTop: 8 }}>
-                  Security Market Line
-                  <span className="sub">α = ASSET RETURN − SML · β ON X</span>
+                  {t("capm.smlTitle")}
+                  <span className="sub">{t("capm.smlSub")}</span>
                 </div>
                 <svg viewBox={`0 0 ${sml.W} ${sml.H}`} className="bond-svg">
                   <line x1={sml.m.l} y1={sml.H - sml.m.b} x2={sml.W - sml.m.r} y2={sml.H - sml.m.b} stroke="var(--grid)" />
@@ -241,9 +243,7 @@ export default function CapmPanel({ symbol, quote }: Props) {
 
             <div className="verdict">{smlVerdict}</div>
             <p className="note" style={{ padding: "0 10px 10px" }}>
-              β and α estimated by OLS on daily log returns over the last year vs the selected
-              benchmark; E(Rm) is the annualized historical mean of benchmark returns. Historical
-              estimates — not investment advice.
+              {t("capm.note")}
             </p>
           </>
         )}

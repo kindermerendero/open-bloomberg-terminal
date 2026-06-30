@@ -1,5 +1,16 @@
 # Changelog
 
+## [2026-06-30] — i18n: internazionalizzato il title di ThemeToggle
+- Ultimo testo UI hardcoded rimasto fuori dall'i18n: il `title` del `ThemeToggle` ("Theme: AUTO → DARK → LIGHT") ora passa da `t("header.theme")` (nuova chiave `header.theme` in EN/IT)
+- Verifica completezza i18n: tutti i componenti usano `t()`, parità chiavi EN/IT (198 per ramo, nessun mismatch), build verde. Restano neutri di proposito solo il `title` di `LanguageToggle` (bilingue EN↔IT per design) e i token finanziari/formule
+
+## [2026-06-23] — i18n bilingue EN/IT con toggle nell'header
+- L'intera webapp è ora **bilingue inglese/italiano**. Sistema i18n **custom leggero** senza librerie (coerente con la filosofia "niente framework"): dizionario namespaced `src/lib/dict.ts` (`DICT.en`/`DICT.it`), provider `src/lib/i18n.tsx` (`LanguageProvider` montato in `layout.tsx`, hook `useLang()` → `{ lang, setLang, t, tRaw }`). `t(key, params)` risolve dot-notation con fallback EN e interpolazione `{placeholder}`; `tRaw(key)` espone valori strutturati (tabelle comandi HELP, soglie OPA, label dei waterfall MNA/IPO)
+- **Default lingua**: override manuale in localStorage (`opnb-lang`) → altrimenti `navigator.language` (IT per browser italiano, altrimenti EN). **Toggle** `LanguageToggle.tsx` (EN↔IT) nell'header accanto al `ThemeToggle`. Provider con pattern `mounted`-like (render iniziale EN per evitare hydration mismatch, poi risoluzione client) coerente con `ThemeToggle`
+- **Tutti i ~30 componenti** estratti su `t()`: header/clock, command bar, pannelli MARKET (Quote, Chart, Watchlist, News, FX, Crypto, Help), moduli Tiburzi (CAPM, Option Val, Markowitz, Bond) e Barchiesi (EQV, MNA, RGT, IPO, OPA) — incluse note esplicative, verdetti, label assi/grafici SVG, intestazioni tabelle e messaggi del command parser. `fmtAgo` in `format.ts` ora accetta `lang`
+- **Restano neutri di proposito** (non tradotti): mnemonici comandi (HELP, GP, N, ADD/DEL <SYM>), ticker, abbreviazioni finanziarie internazionali (EPS, ROE, P/E, YTM, GMV) e notazione delle formule (P₀ = D₁/(r−g), u = e^(σ√Δt), g₁ \ r…)
+- Decisione: i18n custom invece di next-intl/react-i18next per zero dipendenze e coerenza con l'approccio CSS-custom del progetto. Build e typecheck verdi, SSR statico della "/" ok
+
 ## [2026-06-23] — Markowitz: via i contorni della regione + fix 2-asset/short
 - Rimossi i **contorni** della regione di fattibilità (outline tracciato + stecche degli archi a 2 asset): resta solo l'area ombreggiata
 - Con **2 asset** l'insieme fattibile è una curva, non un'area → nessun fill (prima in modalità short appariva una banda rettangolare priva di senso)

@@ -10,6 +10,7 @@ import {
   sustainableGrowth,
 } from "@/lib/quant";
 import { fmtNum, fmtPct, signClass } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 interface Props {
   symbol: string | null;
@@ -36,6 +37,7 @@ const SENS_N = 7; // 7×7 grid centered on the current (r, g₁)
 const SENS_MID = (SENS_N - 1) / 2;
 
 export default function EquityValuationPanel({ symbol, quote }: Props) {
+  const { t } = useLang();
   const [fund, setFund] = useState<Fundamentals | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -106,8 +108,8 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
   if (!symbol) {
     return (
       <div className="panel" style={{ flex: "1 1 auto" }}>
-        <div className="panel-title">EQV — Equity Valuation</div>
-        <div className="empty">Load a security first — e.g. AAPL EQV</div>
+        <div className="panel-title">{t("eqv.titleEmpty")}</div>
+        <div className="empty">{t("eqv.loadFirst")}</div>
       </div>
     );
   }
@@ -143,62 +145,62 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
   const verdict =
     gap != null
       ? gap > 0.1
-        ? `UNDERVALUED — DDM FAIR VALUE ${fmtPct(gap * 100)} ABOVE MARKET`
+        ? t("eqv.undervalued", { gap: fmtPct(gap * 100) })
         : gap < -0.1
-          ? `OVERVALUED — DDM FAIR VALUE ${fmtPct(gap * 100)} VS MARKET`
-          : "FAIRLY PRICED — DDM WITHIN ±10% OF MARKET"
+          ? t("eqv.overvalued", { gap: fmtPct(gap * 100) })
+          : t("eqv.fairPriced")
       : d0 <= 0
-        ? "PROVIDE A DIVIDEND > 0 TO RUN THE DDM (NON-PAYERS NEED A DCF)"
-        : "DDM DIVERGES (r ≤ g) — RAISE COST OF EQUITY OR LOWER GROWTH";
+        ? t("eqv.needDiv")
+        : t("eqv.diverges");
 
   return (
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
         EQV — {symbol} {price != null ? `@ ${fmtNum(price)}` : ""}
         <span className="sub">
-          {fund?.source === "SEC" ? `SEC EDGAR · FY ${fund.fiscalYearEnd ?? "—"}` : "MANUAL INPUTS"}
+          {fund?.source === "SEC" ? t("eqv.subSec", { fy: fund.fiscalYearEnd ?? "—" }) : t("eqv.subManual")}
         </span>
       </div>
 
       <div className="controls">
         <label>
-          COST OF EQ % (r)
+          {t("eqv.costEq")}
           <input type="number" step="0.1" value={rPct} onChange={(e) => setRPct(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          DIV / SHARE (D₀)
+          {t("eqv.divShare")}
           <input type="number" step="0.01" value={d0} onChange={(e) => setD0(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          GROWTH g₁ %
+          {t("eqv.growthG1")}
           <input type="number" step="0.1" value={g1Pct} onChange={(e) => setG1Pct(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          TERMINAL g₂ %
+          {t("eqv.terminalG2")}
           <input type="number" step="0.1" value={g2Pct} onChange={(e) => setG2Pct(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          STAGE-1 YEARS
+          {t("eqv.stage1Years")}
           <input type="number" step="1" min={1} max={20} value={years} onChange={(e) => setYears(parseInt(e.target.value) || 1)} />
         </label>
         <label>
-          EPS
+          {t("eqv.eps")}
           <input type="number" step="0.01" value={eps} onChange={(e) => setEps(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          BVPS
+          {t("eqv.bvps")}
           <input type="number" step="0.01" value={bvps} onChange={(e) => setBvps(parseFloat(e.target.value) || 0)} />
         </label>
-        <span className="hint">r auto = rf + β·ERP (ERP 5.5%) · g₁ auto = (1−payout)·ROE</span>
+        <span className="hint">{t("eqv.hint")}</span>
       </div>
 
       <div className="panel-body">
-        {loading && <div className="loading">LOADING FUNDAMENTALS…</div>}
-        {error && <div className="empty">ERR: {error}</div>}
+        {loading && <div className="loading">{t("eqv.loadingFund")}</div>}
+        {error && <div className="empty">{t("common.err")}: {error}</div>}
         {!loading && (
           <>
             <div className="stat-callout">
-              <span className="k">DDM FAIR VALUE (2-stage) vs MARKET {price != null ? fmtNum(price) : "—"}</span>
+              <span className="k">{t("eqv.fairVs", { price: price != null ? fmtNum(price) : "—" })}</span>
               <span className={`v ${gap == null ? "flat" : signClass(gap)}`}>
                 {fair != null ? fmtNum(fair) : "—"}
               </span>
@@ -206,51 +208,51 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
 
             <div className="quote-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
               <div className="cell">
-                <span className="k">GORDON P₀ = D₁/(r−g)</span>
+                <span className="k">{t("eqv.gordon")}</span>
                 <span className="v">{gordon != null ? fmtNum(gordon) : "r ≤ g"}</span>
               </div>
               <div className="cell">
-                <span className="k">2-STAGE P₀</span>
+                <span className="k">{t("eqv.twoStage")}</span>
                 <span className="v">{twoStage.price != null ? fmtNum(twoStage.price) : "r ≤ g₂"}</span>
               </div>
               <div className="cell">
-                <span className="k">NEXT DIV (D₁)</span>
+                <span className="k">{t("eqv.nextDiv")}</span>
                 <span className="v">{fmtNum(div1)}</span>
               </div>
               <div className="cell">
-                <span className="k">PV STAGE-1 DIVS</span>
+                <span className="k">{t("eqv.pvStage1")}</span>
                 <span className="v">{fmtNum(twoStage.pvHigh)}</span>
               </div>
               <div className="cell">
-                <span className="k">PV TERMINAL</span>
+                <span className="k">{t("eqv.pvTerminal")}</span>
                 <span className="v">{fmtNum(twoStage.pvTerminal)}</span>
               </div>
               <div className="cell">
-                <span className="k">PVGO = P − EPS/r</span>
+                <span className="k">{t("eqv.pvgo")}</span>
                 <span className={`v ${pv == null ? "flat" : signClass(pv)}`}>{pv != null ? fmtNum(pv) : "—"}</span>
               </div>
               <div className="cell">
-                <span className="k">NO-GROWTH VALUE EPS/r</span>
+                <span className="k">{t("eqv.noGrowth")}</span>
                 <span className="v">{noGrowth != null ? fmtNum(noGrowth) : "—"}</span>
               </div>
               <div className="cell">
-                <span className="k">P / E</span>
+                <span className="k">{t("eqv.pe")}</span>
                 <span className="v">{pe != null ? fmtNum(pe) : "—"}</span>
               </div>
               <div className="cell">
-                <span className="k">P / BV</span>
+                <span className="k">{t("eqv.pbv")}</span>
                 <span className="v">{pbv != null ? fmtNum(pbv) : "—"}</span>
               </div>
               <div className="cell">
-                <span className="k">DIVIDEND YIELD</span>
+                <span className="k">{t("eqv.divYield")}</span>
                 <span className="v">{divYield != null ? fmtPct(divYield * 100) : "—"}</span>
               </div>
               <div className="cell">
-                <span className="k">ROE (SEC)</span>
+                <span className="k">{t("eqv.roe")}</span>
                 <span className="v">{fund?.roe != null ? fmtPct(fund.roe * 100) : "—"}</span>
               </div>
               <div className="cell">
-                <span className="k">PAYOUT (SEC)</span>
+                <span className="k">{t("eqv.payout")}</span>
                 <span className="v">{fund?.payoutRatio != null ? fmtPct(fund.payoutRatio * 100) : "—"}</span>
               </div>
             </div>
@@ -259,16 +261,16 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
               <table className="data">
                 <thead>
                   <tr>
-                    <th>YEAR</th>
+                    <th>{t("eqv.year")}</th>
                     {twoStage.dividends.map((_, i) => (
                       <th key={i}>{i + 1}</th>
                     ))}
-                    <th>TV@N</th>
+                    <th>{t("eqv.tvAtN")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="sym">DIV</td>
+                    <td className="sym">{t("eqv.div")}</td>
                     {twoStage.dividends.map((d, i) => (
                       <td key={i}>{fmtNum(d)}</td>
                     ))}
@@ -281,8 +283,8 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
             {sensCells && (
               <>
                 <div className="panel-title" style={{ marginTop: 8 }}>
-                  Fair-Value Sensitivity
-                  <span className="sub">2-STAGE DDM · vs MARKET {price != null ? fmtNum(price) : "—"}</span>
+                  {t("eqv.sensTitle")}
+                  <span className="sub">{t("eqv.sensSub", { price: price != null ? fmtNum(price) : "—" })}</span>
                 </div>
                 <table className="sens">
                   <thead>
@@ -315,12 +317,7 @@ export default function EquityValuationPanel({ symbol, quote }: Props) {
 
             <div className="verdict">{verdict}</div>
             <p className="note" style={{ padding: "0 10px 10px" }}>
-              DDM Gordon: P₀ = D₁/(r−g). Two-stage: dividends grow at g₁ for N years then at g₂ forever
-              (Gordon terminal value discounted back). PVGO = P − EPS/r isolates the value of growth
-              opportunities; a high P/E driven by PVGO signals a growth stock. r is the cost of equity
-              rf + β·ERP (β from CAPM vs S&P 500, ERP 5.5%); g₁ defaults to sustainable growth
-              (1−payout)·ROE. Fundamentals: SEC EDGAR (US filers, latest 10-K); dividends: Yahoo (TTM).
-              All inputs editable.
+              {t("eqv.note")}
             </p>
           </>
         )}

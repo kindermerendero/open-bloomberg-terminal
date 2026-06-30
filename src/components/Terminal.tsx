@@ -18,8 +18,10 @@ import EquityValuationPanel from "./EquityValuationPanel";
 import MnaPanel from "./MnaPanel";
 import RightsIssuePanel from "./RightsIssuePanel";
 import ThemeToggle from "./ThemeToggle";
+import LanguageToggle from "./LanguageToggle";
 import IpoPanel from "./IpoPanel";
 import OpaPanel from "./OpaPanel";
+import { useLang } from "@/lib/i18n";
 
 type Mode =
   | "SEC"
@@ -100,6 +102,7 @@ const catOf = (m: Mode): Cat =>
   CATEGORIES.find((c) => c.items.some((it) => it[0] === m))?.id ?? "MARKET";
 
 export default function Terminal() {
+  const { t } = useLang();
   const [mode, setMode] = useState<Mode>("SEC");
   const [activeCat, setActiveCat] = useState<Cat>("MARKET");
   const [symbol, setSymbol] = useState<string | null>("AAPL");
@@ -154,7 +157,7 @@ export default function Terminal() {
       const now = new Date();
       const local = now.toTimeString().slice(0, 8);
       const utc = now.toISOString().slice(11, 19);
-      setClock(`${local} LOCAL  |  ${utc} UTC`);
+      setClock(`${local}|${utc}`);
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -173,10 +176,10 @@ export default function Terminal() {
         );
         const json = await res.json();
         if (cancelled) return;
-        if (!res.ok) throw new Error(json.error ?? "Load failed");
+        if (!res.ok) throw new Error(json.error ?? t("msg.loadFailed"));
         setQuote(json.quote);
         setCandles(json.candles);
-        notify(`${symbol} LOADED`);
+        notify(t("msg.loaded", { sym: symbol }));
       } catch (e) {
         if (!cancelled) notify(`ERR: ${(e as Error).message}`, true);
       } finally {
@@ -269,7 +272,7 @@ export default function Terminal() {
         const res = await fetch("/api/fx");
         const json = await res.json();
         if (cancelled) return;
-        if (!res.ok) throw new Error(json.error ?? "FX load failed");
+        if (!res.ok) throw new Error(json.error ?? t("msg.fxFailed"));
         setFxRates(json.rates ?? []);
         setFxDate(json.date ?? "");
       } catch (e) {
@@ -293,7 +296,7 @@ export default function Terminal() {
         const res = await fetch("/api/crypto");
         const json = await res.json();
         if (cancelled) return;
-        if (!res.ok) throw new Error(json.error ?? "Crypto load failed");
+        if (!res.ok) throw new Error(json.error ?? t("msg.cryptoFailed"));
         setCrypto(json.rows ?? []);
       } catch (e) {
         if (!cancelled) notify(`ERR: ${(e as Error).message}`, true);
@@ -313,9 +316,9 @@ export default function Terminal() {
     (sym: string, target: Mode = "SEC") => {
       setSymbol(sym.toUpperCase());
       setMode(target);
-      notify(`LOADING ${sym.toUpperCase()}…`);
+      notify(t("msg.loading", { sym: sym.toUpperCase() }));
     },
-    [notify]
+    [notify, t]
   );
 
   // ----- command parser -----
@@ -335,7 +338,7 @@ export default function Terminal() {
       if (cmd === "IPO") return setMode("IPO");
       if (cmd === "OPA" || cmd === "TENDER") return setMode("OPA");
       if (cmd === "CAPM" || cmd === "OV" || cmd === "EQV" || cmd === "DDM") {
-        if (!symbol) return notify(`LOAD A SECURITY FIRST — e.g. AAPL ${cmd}`, true);
+        if (!symbol) return notify(t("msg.loadSecFirst", { cmd }), true);
         return setMode(cmd === "DDM" ? "EQV" : (cmd as Mode));
       }
 
@@ -346,28 +349,28 @@ export default function Terminal() {
         if (syms.length >= 2) {
           setPortfolio(syms);
           setMode("MKWZ");
-          return notify(`PORTFOLIO: ${syms.join(", ")}`);
+          return notify(t("msg.portfolio", { syms: syms.join(", ") }));
         }
         if (portfolio.length >= 2) return setMode("MKWZ");
-        return notify("MKWZ NEEDS ≥2 TICKERS — e.g. MKWZ AAPL,MSFT,NVDA,JPM", true);
+        return notify(t("msg.mkwzNeeds"), true);
       }
 
       if (cmd in RANGE_CMDS) {
         setRange(RANGE_CMDS[cmd]);
         setMode("SEC");
-        return notify(`RANGE ${cmd}`);
+        return notify(t("msg.range", { r: cmd }));
       }
 
       if (parts[0] === "ADD" && parts[1]) {
         const sym = parts[1];
-        if (!TICKER_RE.test(sym)) return notify(`INVALID SYMBOL: ${sym}`, true);
+        if (!TICKER_RE.test(sym)) return notify(t("msg.invalidSymbol", { sym }), true);
         setWatchlist((wl) => (wl.includes(sym) ? wl : [...wl, sym]));
-        return notify(`${sym} ADDED TO WATCHLIST`);
+        return notify(t("msg.addedWatch", { sym }));
       }
       if (parts[0] === "DEL" && parts[1]) {
         const sym = parts[1];
         setWatchlist((wl) => wl.filter((s) => s !== sym));
-        return notify(`${sym} REMOVED FROM WATCHLIST`);
+        return notify(t("msg.removedWatch", { sym }));
       }
 
       // "<TICKER> GP" / "<TICKER> CAPM" … — Bloomberg-style function suffix
@@ -381,9 +384,9 @@ export default function Terminal() {
         return loadSecurity(parts[0]);
       }
 
-      notify(`UNKNOWN COMMAND: ${cmd} — TYPE HELP`, true);
+      notify(t("msg.unknown", { cmd }), true);
     },
-    [loadSecurity, notify, symbol]
+    [loadSecurity, notify, symbol, t]
   );
 
   // keep the active category in sync with the open panel (so the bar follows
@@ -413,15 +416,16 @@ export default function Terminal() {
     <div className="terminal">
       <div className="header">
         <span className="brand">
-          OPNB <span>// OPEN BLOOMBERG TERMINAL — FREE DATA ONLY</span>
+          OPNB <span>{t("header.tagline")}</span>
         </span>
         <span className="clock">
-          {clock.split("|")[0]}
-          <span className="utc">{clock.split("|")[1]}</span>
+          {clock.split("|")[0]} {t("header.local")}
+          <span className="utc">{clock.split("|")[1]} UTC</span>
         </span>
         <span className="header-right">
+          <LanguageToggle />
           <ThemeToggle />
-          <span className="live">LIVE</span>
+          <span className="live">{t("header.live")}</span>
         </span>
       </div>
 
@@ -473,14 +477,14 @@ export default function Terminal() {
       <div className="cattabs">
         {CATEGORIES.map((c) => (
           <button key={c.id} className={activeCat === c.id ? "active" : ""} onClick={() => setActiveCat(c.id)}>
-            {c.label}
+            {t(`nav.cat.${c.id}`)}
           </button>
         ))}
       </div>
       <div className="fkeys">
-        {activeItems.map(([m, label], i) => (
+        {activeItems.map(([m], i) => (
           <button key={m} className={mode === m ? "active" : ""} onClick={() => setMode(m)}>
-            <span className="fk">F{i + 1}</span> {label}
+            <span className="fk">F{i + 1}</span> {t(`nav.item.${m}`)}
           </button>
         ))}
       </div>

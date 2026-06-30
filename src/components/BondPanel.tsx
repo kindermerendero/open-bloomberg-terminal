@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { bondAnalytics, bondYTM } from "@/lib/quant";
 import { fmtNum, fmtPct } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 interface CurvePoint {
   label: string;
@@ -26,12 +27,13 @@ type Mode = "price" | "ytm";
 const DAY = 86400000;
 const ms = (iso: string) => Date.parse(iso);
 
-function shapeOf(spread: number | null): string {
-  if (spread == null) return "n/a";
-  return spread < -0.05 ? "INVERTED" : spread < 0.2 ? "FLAT" : "NORMAL";
+function shapeKey(spread: number | null): string {
+  if (spread == null) return "shapeNa";
+  return spread < -0.05 ? "shapeInverted" : spread < 0.2 ? "shapeFlat" : "shapeNormal";
 }
 
 export default function BondPanel() {
+  const { t } = useLang();
   const [source, setSource] = useState<Source>("us");
   const [data, setData] = useState<TermData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,7 +64,7 @@ export default function BondPanel() {
         const res = await fetch(`/api/treasury?source=${source}`);
         const json = await res.json();
         if (cancelled) return;
-        if (!res.ok) throw new Error(json.error ?? "term structure load failed");
+        if (!res.ok) throw new Error(json.error ?? t("msg.termFailed"));
         setData(json);
         setSelIdx(0);
         const ten = (json.curves?.[0]?.points as CurvePoint[] | undefined)?.find((p) => p.years === 10);
@@ -197,58 +199,58 @@ export default function BondPanel() {
   return (
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
-        Fixed Income — {source === "ez" ? "Euro Area" : "US Treasury"} Term Structure
-        <span className="sub">{curve ? `${data?.label} · ${curve.date}` : "FREE PUBLIC DATA"}</span>
+        {source === "ez" ? t("bond.titleEz") : t("bond.titleUs")}
+        <span className="sub">{curve ? `${data?.label} · ${curve.date}` : t("bond.subData")}</span>
       </div>
 
       <div className="controls">
         <label>
-          MARKET
+          {t("bond.market")}
           <div className="seg">
             <button className={source === "us" ? "active" : ""} onClick={() => setSource("us")}>
-              US TREASURY
+              {t("bond.usTreasury")}
             </button>
             <button className={source === "ez" ? "active" : ""} onClick={() => setSource("ez")}>
-              EURO AREA
+              {t("bond.euroArea")}
             </button>
           </div>
         </label>
         <label>
-          COMPARE
+          {t("bond.compare")}
           <div className="seg">
             <button className={showM1 ? "active" : ""} onClick={() => setShowM1((v) => !v)}>
-              vs 1M
+              {t("bond.vs1m")}
             </button>
             <button className={showY1 ? "active" : ""} onClick={() => setShowY1((v) => !v)}>
-              vs 1Y
+              {t("bond.vs1y")}
             </button>
           </div>
         </label>
         <label>
-          PLAYBACK
+          {t("bond.playback")}
           <div className="seg">
             <button className={playing ? "active" : ""} onClick={() => setPlaying((v) => !v)}>
-              {playing ? "❚❚ STOP" : "▶ PLAY"}
+              {playing ? t("bond.stop") : t("bond.play")}
             </button>
           </div>
         </label>
       </div>
 
       <div className="panel-body">
-        {loading && <div className="loading">LOADING CURVE…</div>}
-        {error && <div className="empty">ERR: {error}</div>}
+        {loading && <div className="loading">{t("bond.loadingCurve")}</div>}
+        {error && <div className="empty">{t("common.err")}: {error}</div>}
 
         {curve && plot && (
           <>
             <div className="bond-curvehdr">
               <span>
-                10Y–2Y SPREAD:{" "}
+                {t("bond.spread10_2")}{" "}
                 <b className={spread10_2 != null && spread10_2 < 0 ? "down" : "up"}>
                   {spread10_2 != null ? `${fmtNum(spread10_2 * 100, 0)} bp` : "—"}
                 </b>
               </span>
               <span>
-                CURVE: <b>{shapeOf(spread10_2)}</b>
+                {t("bond.curve")} <b>{t(`bond.${shapeKey(spread10_2)}`)}</b>
               </span>
               <span className="ts-legend">
                 <i style={{ background: "var(--amber)" }} /> {curve.date}
@@ -295,7 +297,7 @@ export default function BondPanel() {
 
             {/* date scrubber */}
             <div className="ts-scrub">
-              <span className="k">DATE</span>
+              <span className="k">{t("bond.date")}</span>
               <input
                 type="range"
                 min={0}
@@ -309,7 +311,7 @@ export default function BondPanel() {
               <span className="v">{curve.date}</span>
               {selIdx !== 0 && (
                 <button className="ts-latest" onClick={() => setSelIdx(0)}>
-                  ⤒ LATEST
+                  {t("bond.latest")}
                 </button>
               )}
             </div>
@@ -318,8 +320,8 @@ export default function BondPanel() {
             {spark && (
               <>
                 <div className="bond-curvehdr" style={{ marginTop: 4 }}>
-                  <span>10Y–2Y SPREAD HISTORY</span>
-                  <span className="hint">red = inverted (10Y &lt; 2Y) · recession signal</span>
+                  <span>{t("bond.spreadHistory")}</span>
+                  <span className="hint">{t("bond.spreadHistHint")}</span>
                 </div>
                 <svg viewBox={`0 0 ${spark.W} ${spark.H}`} className="bond-svg">
                   <line x1={spark.m.l} y1={spark.zeroY} x2={spark.W - spark.m.r} y2={spark.zeroY} stroke="var(--grid)" strokeDasharray="2 2" />
@@ -344,38 +346,38 @@ export default function BondPanel() {
 
             {/* bond calculator */}
             <div className="panel-title" style={{ marginTop: 8 }}>
-              Bond Calculator
-              <span className="sub">FIXED-COUPON, SEMI-ANNUAL DEFAULT</span>
+              {t("bond.calcTitle")}
+              <span className="sub">{t("bond.calcSub")}</span>
             </div>
             <div className="controls">
               <div className="seg">
                 <button className={mode === "price" ? "active" : ""} onClick={() => setMode("price")}>
-                  YIELD→PRICE
+                  {t("bond.yieldToPrice")}
                 </button>
                 <button className={mode === "ytm" ? "active" : ""} onClick={() => setMode("ytm")}>
-                  PRICE→YTM
+                  {t("bond.priceToYtm")}
                 </button>
               </div>
               <label>
-                COUPON %
+                {t("bond.coupon")}
                 <input type="number" step="0.125" value={couponPct} onChange={(e) => setCouponPct(parseFloat(e.target.value) || 0)} />
               </label>
               <label>
-                YEARS
+                {t("bond.years")}
                 <input type="number" step="0.5" min={0.5} value={years} onChange={(e) => setYears(parseFloat(e.target.value) || 0.5)} />
               </label>
               <label>
-                FREQ/Y
+                {t("bond.freq")}
                 <input type="number" min={1} max={12} value={freq} onChange={(e) => setFreq(parseInt(e.target.value) || 1)} />
               </label>
               {mode === "price" ? (
                 <label>
-                  YIELD %
+                  {t("bond.yieldPct")}
                   <input type="number" step="0.05" value={yieldPct} onChange={(e) => setYieldPct(parseFloat(e.target.value) || 0)} />
                 </label>
               ) : (
                 <label>
-                  PRICE
+                  {t("bond.price")}
                   <input type="number" step="0.5" value={priceIn} onChange={(e) => setPriceIn(parseFloat(e.target.value) || 0)} />
                 </label>
               )}
@@ -384,38 +386,35 @@ export default function BondPanel() {
             {analytics ? (
               <div className="quote-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
                 <div className="cell">
-                  <span className="k">{mode === "price" ? "PRICE (per 100)" : "YTM"}</span>
+                  <span className="k">{mode === "price" ? t("bond.pricePer100") : t("bond.ytm")}</span>
                   <span className="v">{mode === "price" ? fmtNum(analytics.price, 3) : fmtPct(analytics.ytm * 100)}</span>
                 </div>
                 <div className="cell">
-                  <span className="k">{mode === "price" ? "YIELD" : "PRICE"}</span>
+                  <span className="k">{mode === "price" ? t("bond.yieldLbl") : t("bond.price")}</span>
                   <span className="v">{mode === "price" ? fmtPct(yieldPct) : fmtNum(analytics.price, 3)}</span>
                 </div>
                 <div className="cell">
-                  <span className="k">CURRENT YIELD</span>
+                  <span className="k">{t("bond.currentYield")}</span>
                   <span className="v">{fmtPct(analytics.currentYield * 100)}</span>
                 </div>
                 <div className="cell">
-                  <span className="k">MACAULAY DUR</span>
+                  <span className="k">{t("bond.macaulay")}</span>
                   <span className="v">{fmtNum(analytics.macaulay, 3)} y</span>
                 </div>
                 <div className="cell">
-                  <span className="k">MODIFIED DUR</span>
+                  <span className="k">{t("bond.modified")}</span>
                   <span className="v">{fmtNum(analytics.modified, 3)}</span>
                 </div>
                 <div className="cell">
-                  <span className="k">CONVEXITY</span>
+                  <span className="k">{t("bond.convexity")}</span>
                   <span className="v">{fmtNum(analytics.convexity, 2)}</span>
                 </div>
               </div>
             ) : (
-              <div className="empty">No yield solves for that price — check inputs</div>
+              <div className="empty">{t("bond.noPrice")}</div>
             )}
             <p className="note" style={{ padding: "0 10px 10px" }}>
-              Term structure: {source === "ez" ? "euro area AAA spot rates (ECB Data Portal)" : "US Treasury par yields (Treasury.gov)"},
-              daily. Scrub the date, overlay 1M/1Y-ago curves or hit PLAY to animate ~2y of history.
-              10Y–2Y inversion is a classic recession signal. Bond calculator: price = Σ coupon/(1+y/m)ᵏ +
-              face/(1+y/m)ⁿ; YTM by bisection; modified duration = Macaulay/(1+y/m); convexity in year².
+              {t("bond.note", { src: source === "ez" ? t("bond.noteEz") : t("bond.noteUs") })}
             </p>
           </>
         )}

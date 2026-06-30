@@ -3,16 +3,15 @@
 import { useMemo, useState } from "react";
 import { mnaEval } from "@/lib/quant";
 import { fmtNum, signClass } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 type Deal = "horizontal" | "vertical" | "conglomerate";
 
-const DEALS: Array<[Deal, string, string]> = [
-  ["horizontal", "HORIZONTAL", "same industry — scale economies (es. DowDuPont)"],
-  ["vertical", "VERTICAL", "supply chain — integration (es. EssilorLuxottica)"],
-  ["conglomerate", "CONGLOMERATE", "unrelated sectors — diversification (es. Tata)"],
-];
+const DEAL_IDS: Deal[] = ["horizontal", "vertical", "conglomerate"];
+const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 export default function MnaPanel() {
+  const { t } = useLang();
   const [vaA, setVaA] = useState(1000); // standalone value acquirer
   const [vaB, setVaB] = useState(400); // standalone value target
   const [vaAB, setVaAB] = useState(1500); // combined value
@@ -46,9 +45,9 @@ export default function MnaPanel() {
       h: Math.max(1, sy(bottom) - sy(top)),
     });
     const bars = [
-      { ...seg(0, Math.max(0, synergy), Math.min(0, synergy)), label: "SYNERGY", caption: "value created", val: synergy, color: synergy >= 0 ? "var(--up)" : "var(--down)" },
-      { ...seg(1, Math.max(cum1, cum2), Math.min(cum1, cum2)), label: "− PREMIUM", caption: "→ target", val: -premium, color: "var(--down)" },
-      { ...seg(2, Math.max(0, npv), Math.min(0, npv)), label: "= NPV", caption: "→ acquirer", val: npv, color: npv >= 0 ? "var(--up)" : "var(--down)" },
+      { ...seg(0, Math.max(0, synergy), Math.min(0, synergy)), label: "mna.barSynergy", caption: "mna.barSynergyCap", val: synergy, color: synergy >= 0 ? "var(--up)" : "var(--down)" },
+      { ...seg(1, Math.max(cum1, cum2), Math.min(cum1, cum2)), label: "mna.barPremium", caption: "mna.barPremiumCap", val: -premium, color: "var(--down)" },
+      { ...seg(2, Math.max(0, npv), Math.min(0, npv)), label: "mna.barNpv", caption: "mna.barNpvCap", val: npv, color: npv >= 0 ? "var(--up)" : "var(--down)" },
     ];
     const connectors = [
       { x1: cx(0) + bw / 2, x2: cx(1) - bw / 2, y: sy(cum1) },
@@ -59,84 +58,84 @@ export default function MnaPanel() {
 
   const verdict =
     res.npv > 0
-      ? `DEAL CREATES VALUE — ACQUIRER NPV +${fmtNum(res.npv)} (synergies exceed the premium)`
+      ? t("mna.createsValue", { npv: fmtNum(res.npv) })
       : res.npv < 0
-        ? `DEAL DESTROYS VALUE — ACQUIRER NPV ${fmtNum(res.npv)} (premium exceeds synergies)`
-        : "BREAK-EVEN — synergies exactly absorbed by the premium";
+        ? t("mna.destroysValue", { npv: fmtNum(res.npv) })
+        : t("mna.breakEven");
 
   return (
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
-        MNA — Mergers &amp; Acquisitions
-        <span className="sub">VAN = SYNERGIES − PREMIUM</span>
+        {t("mna.title")}
+        <span className="sub">{t("mna.sub")}</span>
       </div>
 
       <div className="controls">
         <label>
-          VA(A) ACQUIRER
+          {t("mna.vaA")}
           <input type="number" step="10" value={vaA} onChange={(e) => setVaA(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          VA(B) TARGET
+          {t("mna.vaB")}
           <input type="number" step="10" value={vaB} onChange={(e) => setVaB(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          VA(AB) COMBINED
+          {t("mna.vaAB")}
           <input type="number" step="10" value={vaAB} onChange={(e) => setVaAB(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          PREMIUM % ON B
+          {t("mna.premiumPct")}
           <input type="number" step="1" value={premiumPct} onChange={(e) => setPremiumPct(parseFloat(e.target.value) || 0)} />
         </label>
       </div>
 
       <div className="controls">
         <div className="seg">
-          {DEALS.map(([d, label]) => (
+          {DEAL_IDS.map((d) => (
             <button key={d} className={deal === d ? "active" : ""} onClick={() => setDeal(d)}>
-              {label}
+              {t(`mna.deal${cap(d)}`)}
             </button>
           ))}
         </div>
-        <span className="hint">{DEALS.find((d) => d[0] === deal)?.[2]}</span>
+        <span className="hint">{t(`mna.desc${cap(deal)}`)}</span>
       </div>
 
       <div className="panel-body">
         <div className="stat-callout">
-          <span className="k">VAN ACQUISIZIONE = SINERGIE − PREMIO</span>
+          <span className="k">{t("mna.vanCallout")}</span>
           <span className={`v ${signClass(res.npv)}`}>{fmtNum(res.npv)}</span>
         </div>
 
         <div className="quote-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
           <div className="cell">
-            <span className="k">COMBINED STANDALONE</span>
+            <span className="k">{t("mna.combinedStandalone")}</span>
             <span className="v">{fmtNum(res.combinedStandalone)}</span>
           </div>
           <div className="cell">
-            <span className="k">SYNERGY VA(AB)−ΣVA</span>
+            <span className="k">{t("mna.synergy")}</span>
             <span className={`v ${signClass(res.synergy)}`}>{fmtNum(res.synergy)}</span>
           </div>
           <div className="cell">
-            <span className="k">SYNERGY % OF TARGET</span>
+            <span className="k">{t("mna.synergyPct")}</span>
             <span className={`v ${signClass(synergyPct)}`}>{fmtNum(synergyPct)}%</span>
           </div>
           <div className="cell">
-            <span className="k">PREMIUM PAID</span>
+            <span className="k">{t("mna.premiumPaid")}</span>
             <span className="v">{fmtNum(res.premium)}</span>
           </div>
           <div className="cell">
-            <span className="k">COST = VA(B)+PREMIUM</span>
+            <span className="k">{t("mna.cost")}</span>
             <span className="v">{fmtNum(res.cost)}</span>
           </div>
           <div className="cell">
-            <span className="k">GAIN TO TARGET</span>
+            <span className="k">{t("mna.gainTarget")}</span>
             <span className="v up">{fmtNum(res.premium)}</span>
           </div>
         </div>
 
         <div className="panel-title" style={{ marginTop: 8 }}>
-          Value Bridge
-          <span className="sub">SYNERGY − PREMIUM = ACQUIRER NPV</span>
+          {t("mna.bridgeTitle")}
+          <span className="sub">{t("mna.bridgeSub")}</span>
         </div>
         <svg viewBox={`0 0 ${bridge.W} ${bridge.H}`} className="bond-svg">
           <line x1={bridge.m.l} y1={bridge.zeroY} x2={bridge.W - bridge.m.r} y2={bridge.zeroY} stroke="var(--grid)" />
@@ -150,10 +149,10 @@ export default function MnaPanel() {
                 {fmtNum(b.val)}
               </text>
               <text x={bridge.cx(i)} y={bridge.H - bridge.m.b + 15} className="mkwz-axis" textAnchor="middle">
-                {b.label}
+                {t(b.label)}
               </text>
               <text x={bridge.cx(i)} y={bridge.H - bridge.m.b + 27} className="mkwz-axis" textAnchor="middle" opacity={0.7}>
-                {b.caption}
+                {t(b.caption)}
               </text>
             </g>
           ))}
@@ -161,11 +160,7 @@ export default function MnaPanel() {
 
         <div className="verdict">{verdict}</div>
         <p className="note" style={{ padding: "0 10px 10px" }}>
-          Synergies = VA(AB) − [VA(A) + VA(B)]: the extra value of the combined entity over the two
-          firms standalone. The premium is the cash paid to target shareholders above market value;
-          the target captures it. The acquirer creates value only if VAN = synergies − premium &gt; 0,
-          i.e. synergies are real and not overpaid for. Estimate VA(AB) by DCF on the combined cash
-          flows. Acquisition waves cluster in rising markets with low rates.
+          {t("mna.note")}
         </p>
       </div>
     </div>

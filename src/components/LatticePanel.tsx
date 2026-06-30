@@ -11,6 +11,7 @@ import {
   type OptionType,
 } from "@/lib/quant";
 import { fmtNum } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 interface Props {
   symbol: string | null;
@@ -25,6 +26,7 @@ function niceStrike(price: number): number {
 }
 
 export default function LatticePanel({ symbol, quote }: Props) {
+  const { t } = useLang();
   const S0 = quote?.price ?? 0;
   const [strike, setStrike] = useState(0);
   const [months, setMonths] = useState(6);
@@ -104,8 +106,8 @@ export default function LatticePanel({ symbol, quote }: Props) {
   if (!symbol || !quote) {
     return (
       <div className="panel" style={{ flex: "1 1 auto" }}>
-        <div className="panel-title">Option Valuation — Binomial Lattice</div>
-        <div className="empty">Load a security first — e.g. AAPL OV</div>
+        <div className="panel-title">{t("ov.titleEmpty")}</div>
+        <div className="empty">{t("ov.loadFirst")}</div>
       </div>
     );
   }
@@ -122,12 +124,12 @@ export default function LatticePanel({ symbol, quote }: Props) {
   return (
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
-        Option Valuation — {symbol} @ {fmtNum(S0)}
-        <span className="sub">CRR LATTICE ON GBM (ITO)</span>
+        {t("ov.titleLoaded")} — {symbol} @ {fmtNum(S0)}
+        <span className="sub">{t("ov.sub")}</span>
       </div>
       <div className="controls">
         <label>
-          STRIKE
+          {t("ov.strike")}
           <input
             type="number"
             value={strike || ""}
@@ -135,7 +137,7 @@ export default function LatticePanel({ symbol, quote }: Props) {
           />
         </label>
         <label>
-          MONTHS
+          {t("ov.months")}
           <input
             type="number"
             min={1}
@@ -144,7 +146,7 @@ export default function LatticePanel({ symbol, quote }: Props) {
           />
         </label>
         <label>
-          VOL σ %
+          {t("ov.vol")}
           <input
             type="number"
             step="0.5"
@@ -153,7 +155,7 @@ export default function LatticePanel({ symbol, quote }: Props) {
           />
         </label>
         <label>
-          RATE r %
+          {t("ov.rate")}
           <input
             type="number"
             step="0.05"
@@ -162,7 +164,7 @@ export default function LatticePanel({ symbol, quote }: Props) {
           />
         </label>
         <label>
-          STEPS (≤8)
+          {t("ov.steps")}
           <input
             type="number"
             min={1}
@@ -173,18 +175,18 @@ export default function LatticePanel({ symbol, quote }: Props) {
         </label>
         <div className="seg">
           <button className={type === "call" ? "active" : ""} onClick={() => setType("call")}>
-            CALL
+            {t("ov.call")}
           </button>
           <button className={type === "put" ? "active" : ""} onClick={() => setType("put")}>
-            PUT
+            {t("ov.put")}
           </button>
         </div>
         <div className="seg">
           <button className={exercise === "eu" ? "active" : ""} onClick={() => setExercise("eu")}>
-            EUR
+            {t("ov.eur")}
           </button>
           <button className={exercise === "am" ? "active" : ""} onClick={() => setExercise("am")}>
-            AMER
+            {t("ov.amer")}
           </button>
         </div>
       </div>
@@ -193,19 +195,19 @@ export default function LatticePanel({ symbol, quote }: Props) {
           <>
             <div className="ov-results">
               <div className="stat-callout">
-                <span className="k">LATTICE PRICE (N={n})</span>
+                <span className="k">{t("ov.latticePrice", { n })}</span>
                 <span className="v">{fmtNum(result.price, 4)}</span>
               </div>
               <div className="stat-callout">
-                <span className="k">LATTICE PRICE (N=500)</span>
+                <span className="k">{t("ov.latticePrice500")}</span>
                 <span className="v">{fmtNum(fine.price, 4)}</span>
               </div>
               <div className="stat-callout">
-                <span className="k">BLACK-SCHOLES{exercise === "am" ? " (EUR REF.)" : ""}</span>
+                <span className="k">{exercise === "am" ? t("ov.bsEuRef") : t("ov.bs")}</span>
                 <span className="v">{fmtNum(bs.price, 4)}</span>
               </div>
               <div className="stat-callout">
-                <span className="k">DELTA (N=500)</span>
+                <span className="k">{t("ov.delta")}</span>
                 <span className="v">{fmtNum(fine.delta, 4)}</span>
               </div>
             </div>
@@ -219,11 +221,11 @@ export default function LatticePanel({ symbol, quote }: Props) {
                 <span className="v">{fmtNum(result.d, 5)}</span>
               </div>
               <div className="cell">
-                <span className="k">q (risk-neutral)</span>
+                <span className="k">{t("ov.qNeutral")}</span>
                 <span className="v">{fmtNum(result.q, 5)}</span>
               </div>
               <div className="cell">
-                <span className="k">Δt (years)</span>
+                <span className="k">{t("ov.dt")}</span>
                 <span className="v">{fmtNum(result.dt, 5)}</span>
               </div>
             </div>
@@ -281,14 +283,11 @@ export default function LatticePanel({ symbol, quote }: Props) {
               </div>
             )}
             <p className="note" style={{ padding: "0 10px 10px" }}>
-              Cox-Ross-Rubinstein lattice: discretization of the risk-neutral Ito process dS = rS dt
-              + σS dW. White = underlying price, amber = option value, red = early exercise optimal
-              (American). σ defaults to the 1Y historical volatility, r to the 13W T-bill (^IRX).
-              N=500 and Black-Scholes shown for convergence reference.
+              {t("ov.note")}
             </p>
           </>
         ) : (
-          <div className="empty">Set strike, maturity, σ and r to price the option</div>
+          <div className="empty">{t("ov.empty")}</div>
         )}
       </div>
     </div>

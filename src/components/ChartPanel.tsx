@@ -10,6 +10,7 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import type { Candle, ChartRange } from "@/lib/types";
+import { useLang } from "@/lib/i18n";
 
 const RANGES: ChartRange[] = ["1d", "5d", "1mo", "6mo", "1y", "5y", "max"];
 const RANGE_LABELS: Record<ChartRange, string> = {
@@ -49,6 +50,7 @@ function themeColors() {
 }
 
 export default function ChartPanel({ symbol, candles, range, loading, onRangeChange }: Props) {
+  const { t } = useLang();
   const wrapRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -155,7 +157,7 @@ export default function ChartPanel({ symbol, candles, range, loading, onRangeCha
   return (
     <div className="panel chart-panel">
       <div className="panel-title">
-        Price Graph {symbol ? `— ${symbol}` : ""}
+        {t("chart.title")} {symbol ? `— ${symbol}` : ""}
         <span className="sub">GP</span>
       </div>
       <div className="range-bar">
@@ -172,7 +174,7 @@ export default function ChartPanel({ symbol, candles, range, loading, onRangeCha
       <div className="chart-wrap" ref={wrapRef}>
         {loading && (
           <div className="loading" style={{ position: "absolute", zIndex: 10 }}>
-            LOADING…
+            {t("chart.loading")}
           </div>
         )}
       </div>

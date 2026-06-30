@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLang } from "@/lib/i18n";
 
 type Pref = "auto" | "light" | "dark";
 
@@ -8,6 +9,7 @@ const ICON: Record<Pref, string> = { auto: "◐", light: "○", dark: "●" };
 const NEXT: Record<Pref, Pref> = { auto: "dark", dark: "light", light: "auto" };
 
 export default function ThemeToggle() {
+  const { t } = useLang();
   const [pref, setPref] = useState<Pref>("auto");
   const [mounted, setMounted] = useState(false);
 
@@ -37,7 +39,7 @@ export default function ThemeToggle() {
     <button
       className="theme-toggle"
       onClick={() => setPref((p) => NEXT[p])}
-      title="Theme: AUTO → DARK → LIGHT"
+      title={t("header.theme")}
     >
       {mounted ? `${ICON[pref]} ${pref.toUpperCase()}` : "◐"}
     </button>

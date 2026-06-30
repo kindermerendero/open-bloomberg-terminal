@@ -2,16 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { fmtNum, fmtPct, signClass } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 type Offer = "OPS" | "OPV" | "OPVS";
 
-const OFFERS: Array<[Offer, string]> = [
-  ["OPS", "new shares — primary, raises capital"],
-  ["OPV", "existing shares — secondary, no new capital"],
-  ["OPVS", "mixed — primary + secondary"],
-];
+const OFFER_IDS: Offer[] = ["OPS", "OPV", "OPVS"];
 
 export default function IpoPanel() {
+  const { t } = useLang();
   const [offer, setOffer] = useState<Offer>("OPS");
   const [sharesM, setSharesM] = useState(20); // shares offered (millions)
   const [offerPrice, setOfferPrice] = useState(10); // bookbuilt price
@@ -59,11 +57,11 @@ export default function IpoPanel() {
     const c2 = r.gross - r.spread;
     const c3 = c2 - fixedCosts;
     const bars = [
-      { ...seg(0, r.gross, 0), label: "GROSS", val: r.gross, color: "var(--amber)" },
-      { ...seg(1, c1, c2), label: "− SPREAD", val: -r.spread, color: "var(--down)" },
-      { ...seg(2, c2, c3), label: "− FIXED", val: -fixedCosts, color: "var(--down)" },
-      { ...seg(3, c3, net), label: "− LEFT", val: -ml, color: "var(--down)" },
-      { ...seg(4, net, 0), label: "= NET", val: net, color: "var(--up)" },
+      { ...seg(0, r.gross, 0), label: "ipo.barGross", val: r.gross, color: "var(--amber)" },
+      { ...seg(1, c1, c2), label: "ipo.barSpread", val: -r.spread, color: "var(--down)" },
+      { ...seg(2, c2, c3), label: "ipo.barFixed", val: -fixedCosts, color: "var(--down)" },
+      { ...seg(3, c3, net), label: "ipo.barLeft", val: -ml, color: "var(--down)" },
+      { ...seg(4, net, 0), label: "ipo.barNet", val: net, color: "var(--up)" },
     ];
     const conns = [
       { x1: cx(0) + bw / 2, x2: cx(1) - bw / 2, y: sy(c1) },
@@ -140,123 +138,123 @@ export default function IpoPanel() {
 
   const verdict =
     r.underpricing > 0.15
-      ? `HEAVY UNDERPRICING ${fmtPct(r.underpricing * 100)} — large amount left on the table`
+      ? t("ipo.heavyUnder", { pct: fmtPct(r.underpricing * 100) })
       : r.underpricing > 0
-        ? `TYPICAL UNDERPRICING ${fmtPct(r.underpricing * 100)} — first-day pop`
+        ? t("ipo.typicalUnder", { pct: fmtPct(r.underpricing * 100) })
         : r.underpricing < 0
-          ? `OVERPRICED — broke issue price on day one (${fmtPct(r.underpricing * 100)})`
-          : "PRICED AT FAIR VALUE — no first-day move";
+          ? t("ipo.overpriced", { pct: fmtPct(r.underpricing * 100) })
+          : t("ipo.fairValue");
 
   return (
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
-        IPO — Going Public
-        <span className="sub">BOOKBUILDING · UNDERPRICING · GREENSHOE</span>
+        {t("ipo.title")}
+        <span className="sub">{t("ipo.sub")}</span>
       </div>
 
       <div className="controls">
         <div className="seg">
-          {OFFERS.map(([o]) => (
+          {OFFER_IDS.map((o) => (
             <button key={o} className={offer === o ? "active" : ""} onClick={() => setOffer(o)}>
               {o}
             </button>
           ))}
         </div>
-        <span className="hint">{OFFERS.find((o) => o[0] === offer)?.[1]}</span>
+        <span className="hint">{t(`ipo.desc${offer}`)}</span>
       </div>
 
       <div className="controls">
         <label>
-          SHARES (M)
+          {t("ipo.shares")}
           <input type="number" step="1" value={sharesM} onChange={(e) => setSharesM(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          OFFER PRICE
+          {t("ipo.offerPrice")}
           <input type="number" step="0.1" value={offerPrice} onChange={(e) => setOfferPrice(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          1ST-DAY CLOSE
+          {t("ipo.firstClose")}
           <input type="number" step="0.1" value={firstClose} onChange={(e) => setFirstClose(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          SPREAD %
+          {t("ipo.spread")}
           <input type="number" step="0.1" value={spreadPct} onChange={(e) => setSpreadPct(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          GREENSHOE %
+          {t("ipo.greenshoe")}
           <input type="number" step="1" value={greenshoePct} onChange={(e) => setGreenshoePct(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          FIXED COSTS (M)
+          {t("ipo.fixedCosts")}
           <input type="number" step="0.5" value={fixedCosts} onChange={(e) => setFixedCosts(parseFloat(e.target.value) || 0)} />
         </label>
       </div>
 
       <div className="controls">
         <label>
-          RANGE LOW
+          {t("ipo.rangeLow")}
           <input type="number" step="0.1" value={rangeLow} onChange={(e) => setRangeLow(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          RANGE HIGH
+          {t("ipo.rangeHigh")}
           <input type="number" step="0.1" value={rangeHigh} onChange={(e) => setRangeHigh(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          OVERSUBSCRIPTION ×
+          {t("ipo.oversub")}
           <input type="number" step="0.5" min={0.5} value={oversub} onChange={(e) => setOversub(parseFloat(e.target.value) || 0)} />
         </label>
-        <span className="hint">bookbuilding range + demand multiple at the low end</span>
+        <span className="hint">{t("ipo.bookHint")}</span>
       </div>
 
       <div className="panel-body">
         <div className="stat-callout">
-          <span className="k">UNDERPRICING = 1ST-DAY CLOSE / OFFER − 1</span>
+          <span className="k">{t("ipo.underpricingCallout")}</span>
           <span className={`v ${signClass(r.underpricing)}`}>{fmtPct(r.underpricing * 100)}</span>
         </div>
 
         <div className="quote-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
           <div className="cell">
-            <span className="k">GROSS PROCEEDS</span>
+            <span className="k">{t("ipo.gross")}</span>
             <span className="v">{fmtNum(r.gross)}</span>
           </div>
           <div className="cell">
-            <span className="k">UNDERWRITING SPREAD</span>
+            <span className="k">{t("ipo.underSpread")}</span>
             <span className="v">{fmtNum(r.spread)}</span>
           </div>
           <div className="cell">
-            <span className="k">NET TO ISSUER</span>
+            <span className="k">{t("ipo.netIssuer")}</span>
             <span className="v">{fmtNum(r.netProceeds)}</span>
           </div>
           <div className="cell">
-            <span className="k">MONEY LEFT ON TABLE</span>
+            <span className="k">{t("ipo.moneyLeft")}</span>
             <span className={`v ${signClass(r.moneyLeft)}`}>{fmtNum(r.moneyLeft)}</span>
           </div>
           <div className="cell">
-            <span className="k">GREENSHOE SHARES (M)</span>
+            <span className="k">{t("ipo.greenshoeShares")}</span>
             <span className="v">{fmtNum(r.greenshoeShares)}</span>
           </div>
           <div className="cell">
-            <span className="k">GREENSHOE PROCEEDS</span>
+            <span className="k">{t("ipo.greenshoeProceeds")}</span>
             <span className="v">{fmtNum(r.greenshoeProceeds)}</span>
           </div>
           <div className="cell">
-            <span className="k">ALL-IN COST % OF GROSS</span>
+            <span className="k">{t("ipo.allInCost")}</span>
             <span className="v">{fmtPct(r.totalCostPct * 100)}</span>
           </div>
           <div className="cell">
-            <span className="k">EXM FLOAT MIN</span>
+            <span className="k">{t("ipo.exmFloat")}</span>
             <span className="v">≥ 25%</span>
           </div>
           <div className="cell">
-            <span className="k">STAR FLOAT MIN</span>
+            <span className="k">{t("ipo.starFloat")}</span>
             <span className="v">≥ 35%</span>
           </div>
         </div>
 
         {/* 1) cost waterfall */}
         <div className="panel-title" style={{ marginTop: 8 }}>
-          IPO Cost Bridge
-          <span className="sub">GROSS − SPREAD − FIXED − MONEY LEFT = NET CAPTURED</span>
+          {t("ipo.bridgeTitle")}
+          <span className="sub">{t("ipo.bridgeSub")}</span>
         </div>
         <svg viewBox={`0 0 ${bridge.W} ${bridge.H}`} className="bond-svg">
           {bridge.conns.map((c, i) => (
@@ -266,7 +264,7 @@ export default function IpoPanel() {
             <g key={`bb-${i}`}>
               <rect x={b.x} y={b.y} width={b.w} height={b.h} fill={b.color} opacity={0.85} />
               <text x={bridge.cx(i)} y={b.y - 6} className="mkwz-lbl" textAnchor="middle">{fmtNum(b.val)}</text>
-              <text x={bridge.cx(i)} y={bridge.H - bridge.m.b + 16} className="mkwz-axis" textAnchor="middle">{b.label}</text>
+              <text x={bridge.cx(i)} y={bridge.H - bridge.m.b + 16} className="mkwz-axis" textAnchor="middle">{t(b.label)}</text>
             </g>
           ))}
         </svg>
@@ -275,20 +273,20 @@ export default function IpoPanel() {
         {sens && (
           <>
             <div className="panel-title" style={{ marginTop: 8 }}>
-              Offer-Price Sensitivity
-              <span className="sub">NET PROCEEDS vs MONEY LEFT · X = OFFER PRICE</span>
+              {t("ipo.sensTitle")}
+              <span className="sub">{t("ipo.sensSub")}</span>
             </div>
             <svg viewBox={`0 0 ${sens.W} ${sens.H}`} className="bond-svg">
               <line x1={sens.m.l} y1={sens.zeroY} x2={sens.W - sens.m.r} y2={sens.zeroY} stroke="var(--grid)" />
               <line x1={sens.fairX} y1={sens.m.t} x2={sens.fairX} y2={sens.H - sens.m.b} stroke="var(--text-dim)" strokeDasharray="3 3" />
-              <text x={sens.fairX} y={sens.m.t + 9} className="mkwz-axis" textAnchor="middle">FAIR (no $ left)</text>
+              <text x={sens.fairX} y={sens.m.t + 9} className="mkwz-axis" textAnchor="middle">{t("ipo.fairLabel")}</text>
               <path d={sens.netPath} fill="none" stroke="var(--amber)" strokeWidth={1.8} />
               <path d={sens.mlPath} fill="none" stroke="var(--cyan)" strokeWidth={1.5} />
               <line x1={sens.offX} y1={sens.m.t} x2={sens.offX} y2={sens.H - sens.m.b} stroke="var(--yellow)" strokeDasharray="2 2" />
               <text x={sens.m.l} y={sens.H - 4} className="mkwz-axis">{fmtNum(sens.xMin, 1)}</text>
               <text x={sens.W - sens.m.r} y={sens.H - 4} className="mkwz-axis" textAnchor="end">{fmtNum(sens.xMax, 1)}</text>
-              <text x={sens.m.l + 4} y={sens.m.t + 9} className="mkwz-axis" fill="var(--amber)">NET</text>
-              <text x={sens.m.l + 4} y={sens.m.t + 20} className="mkwz-axis" fill="var(--cyan)">MONEY LEFT</text>
+              <text x={sens.m.l + 4} y={sens.m.t + 9} className="mkwz-axis" fill="var(--amber)">{t("ipo.net")}</text>
+              <text x={sens.m.l + 4} y={sens.m.t + 20} className="mkwz-axis" fill="var(--cyan)">{t("ipo.moneyLeftAxis")}</text>
             </svg>
           </>
         )}
@@ -297,15 +295,15 @@ export default function IpoPanel() {
         {book && (
           <>
             <div className="panel-title" style={{ marginTop: 8 }}>
-              Bookbuilding Demand
-              <span className="sub">CLEARING PRICE = WHERE DEMAND MEETS SHARES OFFERED</span>
+              {t("ipo.bookTitle")}
+              <span className="sub">{t("ipo.bookSub")}</span>
             </div>
             <svg viewBox={`0 0 ${book.W} ${book.H}`} className="bond-svg">
               <line x1={book.m.l} y1={book.H - book.m.b} x2={book.W - book.m.r} y2={book.H - book.m.b} stroke="var(--grid)" />
               <line x1={book.m.l} y1={book.m.t} x2={book.m.l} y2={book.H - book.m.b} stroke="var(--grid)" />
               {/* shares offered (supply) */}
               <line x1={book.m.l} y1={book.supplyY} x2={book.W - book.m.r} y2={book.supplyY} stroke="var(--cyan)" strokeDasharray="4 2" />
-              <text x={book.W - book.m.r} y={book.supplyY - 4} className="mkwz-axis" textAnchor="end" fill="var(--cyan)">SHARES OFFERED ({fmtNum(sharesM)}M)</text>
+              <text x={book.W - book.m.r} y={book.supplyY - 4} className="mkwz-axis" textAnchor="end" fill="var(--cyan)">{t("ipo.sharesOffered", { n: fmtNum(sharesM) })}</text>
               {/* demand */}
               <path d={book.dPath} fill="none" stroke="var(--amber)" strokeWidth={1.8} />
               {/* clearing price */}
@@ -326,12 +324,7 @@ export default function IpoPanel() {
 
         <div className="verdict">{verdict}</div>
         <p className="note" style={{ padding: "0 10px 10px" }}>
-          The offer price comes from bookbuilding (a range in the prospectus, narrowed by institutional
-          orders). Underpricing — the first-day pop — is money left on the table for the issuer but
-          rewards investors for taking placement risk. The greenshoe is an over-allotment option
-          (typ. 15%) letting underwriters stabilise the price. Total cost ≈ spread (3.5–5.4%) + fixed
-          costs + underpricing. Euronext Milan requires float ≥ 25%, 3 audited statements and a
-          sponsor; STAR adds float ≥ 35% and governance standards.
+          {t("ipo.note")}
         </p>
       </div>
     </div>

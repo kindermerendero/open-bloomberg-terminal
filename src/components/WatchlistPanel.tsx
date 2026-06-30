@@ -2,6 +2,7 @@
 
 import type { Quote } from "@/lib/types";
 import { fmtPct, fmtPrice, signClass } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 interface Props {
   quotes: Quote[];
@@ -10,23 +11,24 @@ interface Props {
 }
 
 export default function WatchlistPanel({ quotes, loading, onSelect }: Props) {
+  const { t } = useLang();
   return (
     <div className="panel" style={{ flex: "1 1 45%" }}>
       <div className="panel-title">
-        Watchlist <span className="sub">ADD/DEL &lt;SYM&gt;</span>
+        {t("watchlist.title")} <span className="sub">ADD/DEL &lt;SYM&gt;</span>
       </div>
       <div className="panel-body">
         {quotes.length === 0 ? (
           <div className={loading ? "loading" : "empty"}>
-            {loading ? "LOADING…" : "Watchlist empty — ADD AAPL"}
+            {loading ? t("common.loading") : t("watchlist.empty")}
           </div>
         ) : (
           <table className="data">
             <thead>
               <tr>
-                <th>Sym</th>
-                <th>Last</th>
-                <th>Chg%</th>
+                <th>{t("watchlist.sym")}</th>
+                <th>{t("watchlist.last")}</th>
+                <th>{t("watchlist.chg")}</th>
               </tr>
             </thead>
             <tbody>

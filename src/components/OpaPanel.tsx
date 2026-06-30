@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Fundamentals } from "@/lib/types";
 import { fmtNum, fmtPct, signClass } from "@/lib/format";
+import { useLang } from "@/lib/i18n";
 
 type Stance = "friendly" | "hostile";
 
@@ -10,15 +11,10 @@ interface Props {
   symbol: string | null;
 }
 
-// Italian takeover thresholds (TUF / CONSOB)
-const THRESHOLDS: Array<[number, string]> = [
-  [30, "30% MANDATORY"],
-  [50, "50% CONTROL"],
-  [90, "90% SQUEEZE-OUT"],
-  [95, "95% SELL-OUT"],
-];
-
 export default function OpaPanel({ symbol }: Props) {
+  const { t, tRaw } = useLang();
+  // Italian takeover thresholds (TUF / CONSOB)
+  const THRESHOLDS = tRaw<Array<[number, string]>>("opa.thresholds");
   const [totalShares, setTotalShares] = useState(100); // total shares (M)
   const [currentPct, setCurrentPct] = useState(5); // current stake %
   const [targetPct, setTargetPct] = useState(60); // stake sought %
@@ -98,95 +94,95 @@ export default function OpaPanel({ symbol }: Props) {
   }, [totalShares, currentPct, targetPct, offerPrice]);
 
   const verdict = r.reachesSqueezeOut
-    ? "≥ 90% — SQUEEZE-OUT: right to compulsorily buy out residual minorities, then delist"
+    ? t("opa.verdictSqueeze")
     : r.triggersMandatory
-      ? "≥ 30% — MANDATORY TENDER OFFER triggered (CONSOB): bid must extend to all shareholders"
-      : "BELOW 30% — voluntary partial bid, no mandatory-offer obligation";
+      ? t("opa.verdictMandatory")
+      : t("opa.verdictBelow");
 
   return (
     <div className="panel" style={{ flex: "1 1 auto" }}>
       <div className="panel-title">
-        OPA — Tender Offer
-        <span className="sub">THRESHOLDS · PREMIUM · SQUEEZE-OUT</span>
+        {t("opa.title")}
+        <span className="sub">{t("opa.sub")}</span>
       </div>
 
       <div className="controls">
         <div className="seg">
           <button className={stance === "friendly" ? "active" : ""} onClick={() => setStance("friendly")}>
-            FRIENDLY
+            {t("opa.friendly")}
           </button>
           <button className={stance === "hostile" ? "active" : ""} onClick={() => setStance("hostile")}>
-            HOSTILE
+            {t("opa.hostile")}
           </button>
         </div>
         <span className="hint">
-          {stance === "friendly" ? "agreed with the board" : "no board agreement — defenses may apply"}
+          {stance === "friendly" ? t("opa.friendlyHint") : t("opa.hostileHint")}
         </span>
       </div>
 
       <div className="controls">
         <label>
-          TOTAL SHARES (M)
+          {t("opa.totalShares")}
           <input type="number" step="1" value={totalShares} onChange={(e) => setTotalShares(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          CURRENT STAKE %
+          {t("opa.currentStake")}
           <input type="number" step="1" value={currentPct} onChange={(e) => setCurrentPct(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          STAKE SOUGHT %
+          {t("opa.stakeSought")}
           <input type="number" step="1" value={targetPct} onChange={(e) => setTargetPct(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          MARKET PRICE
+          {t("opa.marketPrice")}
           <input type="number" step="0.1" value={marketPrice} onChange={(e) => setMarketPrice(parseFloat(e.target.value) || 0)} />
         </label>
         <label>
-          OFFER PRICE
+          {t("opa.offerPrice")}
           <input type="number" step="0.1" value={offerPrice} onChange={(e) => setOfferPrice(parseFloat(e.target.value) || 0)} />
         </label>
         <span className="hint">
-          {filled ? `auto-filled from ${filled} (SEC + Yahoo) · offer = +25% premium` : "load a ticker to auto-fill shares & price · shares in millions"}
+          {filled ? t("opa.hintFilled", { sym: filled }) : t("opa.hint")}
         </span>
       </div>
 
       <div className="panel-body">
         <div className="stat-callout">
-          <span className="k">BID PREMIUM = OFFER / MARKET − 1</span>
+          <span className="k">{t("opa.premiumCallout")}</span>
           <span className={`v ${signClass(r.premium)}`}>{fmtPct(r.premium * 100)}</span>
         </div>
 
         <div className="quote-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
           <div className="cell">
-            <span className="k">SHARES TO ACQUIRE (M)</span>
+            <span className="k">{t("opa.sharesAcq")}</span>
             <span className="v">{fmtNum(r.sharesToBuy)}</span>
           </div>
           <div className="cell">
-            <span className="k">TOTAL COST OF BID</span>
+            <span className="k">{t("opa.totalCost")}</span>
             <span className="v">{fmtNum(r.cost)}</span>
           </div>
           <div className="cell">
-            <span className="k">MANDATORY (≥30%)</span>
-            <span className={`v ${r.triggersMandatory ? "down" : "up"}`}>{r.triggersMandatory ? "TRIGGERED" : "NO"}</span>
+            <span className="k">{t("opa.mandatory")}</span>
+            <span className={`v ${r.triggersMandatory ? "down" : "up"}`}>{r.triggersMandatory ? t("opa.triggered") : t("opa.no")}</span>
           </div>
           <div className="cell">
-            <span className="k">SQUEEZE-OUT (≥90%)</span>
-            <span className={`v ${r.reachesSqueezeOut ? "up" : ""}`}>{r.reachesSqueezeOut ? "AVAILABLE" : "NO"}</span>
+            <span className="k">{t("opa.squeezeOut")}</span>
+            <span className={`v ${r.reachesSqueezeOut ? "up" : ""}`}>{r.reachesSqueezeOut ? t("opa.available") : t("opa.no")}</span>
           </div>
           <div className="cell">
-            <span className="k">EQUAL-OPPORTUNITY</span>
-            <span className="v">same price pro-quota</span>
+            <span className="k">{t("opa.equalOpp")}</span>
+            <span className="v">{t("opa.equalOppVal")}</span>
           </div>
           <div className="cell">
-            <span className="k">DEFENSES</span>
-            <span className="v">{stance === "hostile" ? "poison pill / white knight" : "n/a"}</span>
+            <span className="k">{t("opa.defenses")}</span>
+            <span className="v">{stance === "hostile" ? t("opa.defensesHostile") : t("opa.na")}</span>
           </div>
         </div>
 
         {/* control thresholds bar */}
         <div className="panel-title" style={{ marginTop: 8 }}>
-          Control Thresholds
-          <span className="sub">CURRENT → SOUGHT vs CONSOB LINES</span>
+          {t("opa.thresholdsTitle")}
+          <span className="sub">{t("opa.thresholdsSub")}</span>
         </div>
         <svg viewBox={`0 0 ${bar.W} ${bar.H}`} className="bond-svg">
           {/* track */}
@@ -196,14 +192,14 @@ export default function OpaPanel({ symbol }: Props) {
           {/* being acquired */}
           <rect x={bar.x(currentPct)} y={bar.yTop} width={Math.max(0, bar.x(targetPct) - bar.x(currentPct))} height={bar.h} fill="var(--amber)" opacity={0.8} />
           {/* threshold markers — stagger labels so the close 90/95 lines don't collide */}
-          {THRESHOLDS.map(([t, label], i) => {
-            const crossed = targetPct >= t;
+          {THRESHOLDS.map(([thr, label], i) => {
+            const crossed = targetPct >= thr;
             const ly = bar.yTop - (i % 2 === 0 ? 7 : 18);
-            const anchor = t >= 88 ? "end" : "middle";
+            const anchor = thr >= 88 ? "end" : "middle";
             return (
-              <g key={t}>
-                <line x1={bar.x(t)} y1={ly + 2} x2={bar.x(t)} y2={bar.yTop + bar.h + 4} stroke={crossed ? "var(--down)" : "var(--text-dim)"} strokeWidth={1} strokeDasharray="3 2" />
-                <text x={bar.x(t)} y={ly} className="mkwz-axis" textAnchor={anchor} fill={crossed ? "var(--down)" : "var(--text-dim)"}>
+              <g key={thr}>
+                <line x1={bar.x(thr)} y1={ly + 2} x2={bar.x(thr)} y2={bar.yTop + bar.h + 4} stroke={crossed ? "var(--down)" : "var(--text-dim)"} strokeWidth={1} strokeDasharray="3 2" />
+                <text x={bar.x(thr)} y={ly} className="mkwz-axis" textAnchor={anchor} fill={crossed ? "var(--down)" : "var(--text-dim)"}>
                   {label}
                 </text>
               </g>
@@ -219,8 +215,8 @@ export default function OpaPanel({ symbol }: Props) {
         {sens && (
           <>
             <div className="panel-title" style={{ marginTop: 8 }}>
-              Cost to Acquire vs Stake Sought
-              <span className="sub">X = STAKE % · Y = TOTAL COST</span>
+              {t("opa.costTitle")}
+              <span className="sub">{t("opa.costSub")}</span>
             </div>
             <svg viewBox={`0 0 ${sens.W} ${sens.H}`} className="bond-svg">
               <line x1={sens.m.l} y1={sens.H - sens.m.b} x2={sens.W - sens.m.r} y2={sens.H - sens.m.b} stroke="var(--grid)" />
@@ -231,10 +227,10 @@ export default function OpaPanel({ symbol }: Props) {
                   <text x={sens.m.l - 6} y={sens.y(t) + 3} className="mkwz-axis" textAnchor="end">{fmtNum(t, 0)}</text>
                 </g>
               ))}
-              {THRESHOLDS.map(([t, label]) => (
-                <g key={`tl-${t}`}>
-                  <line x1={sens.x(t)} y1={sens.m.t} x2={sens.x(t)} y2={sens.H - sens.m.b} stroke={targetPct >= t ? "var(--down)" : "var(--text-dim)"} strokeWidth={0.8} strokeDasharray="3 2" />
-                  <text x={sens.x(t)} y={sens.m.t + 9} className="mkwz-axis" textAnchor="middle" fill={targetPct >= t ? "var(--down)" : "var(--text-dim)"}>{t}</text>
+              {THRESHOLDS.map(([thr]) => (
+                <g key={`tl-${thr}`}>
+                  <line x1={sens.x(thr)} y1={sens.m.t} x2={sens.x(thr)} y2={sens.H - sens.m.b} stroke={targetPct >= thr ? "var(--down)" : "var(--text-dim)"} strokeWidth={0.8} strokeDasharray="3 2" />
+                  <text x={sens.x(thr)} y={sens.m.t + 9} className="mkwz-axis" textAnchor="middle" fill={targetPct >= thr ? "var(--down)" : "var(--text-dim)"}>{thr}</text>
                 </g>
               ))}
               <path d={sens.path} fill="none" stroke="var(--amber)" strokeWidth={1.8} />
@@ -246,12 +242,7 @@ export default function OpaPanel({ symbol }: Props) {
 
         <div className="verdict">{verdict}</div>
         <p className="note" style={{ padding: "0 10px 10px" }}>
-          A tender offer (OPA) is a public bid to buy shares at a fixed price, paid above market as a
-          control premium. The law (L. 149/1992, CONSOB) balances minority protection against efficient
-          reallocation of control. The equal-opportunity rule lets minorities sell at the same price
-          pro-quota; crossing 30% triggers a mandatory offer to all shareholders, preventing creeping
-          control. A hostile bid can meet defenses (poison pill, white knight, golden parachute,
-          higher debt). Above 90% the bidder can squeeze out the residual minorities and delist.
+          {t("opa.note")}
         </p>
       </div>
     </div>
