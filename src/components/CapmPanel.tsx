@@ -236,7 +236,7 @@ export default function CapmPanel({ symbol, quote }: Props) {
                   <circle cx={sml.sx(stats.beta)} cy={sml.sy(sml.assetRet)} r={4} fill="var(--yellow)" />
                   <text x={sml.sx(stats.beta) + 6} y={sml.sy(sml.assetRet) + 3} className="mkwz-lbl">{symbol} (α {fmtPct(stats.alphaAnn * 100)})</text>
                   <text x={sml.W / 2} y={sml.H - 3} className="mkwz-axis" textAnchor="middle">BETA (β)</text>
-                  <text x={14} y={sml.m.t + 6} className="mkwz-axis">E(R)</text>
+                  <text x={sml.m.l - 6} y={sml.m.t - 6} className="mkwz-axis" textAnchor="end">E(R)</text>
                 </svg>
               </>
             )}

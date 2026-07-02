@@ -80,7 +80,8 @@ async function fetchUsYear(year: number): Promise<DatedCurve[]> {
     const points: CurvePoint[] = [];
     for (const [i, label, years] of cols) {
       const v = parseFloat(row[i]);
-      if (Number.isFinite(v)) points.push({ label: label.toUpperCase().replace(" ", ""), years, yield: v });
+      if (Number.isFinite(v))
+        points.push({ label: label.toUpperCase().replace(" ", "").replace("MONTH", "MO"), years, yield: v });
     }
     if (points.length) out.push({ date: usDateToIso(row[dateIdx] || ""), points });
   }

@@ -239,7 +239,7 @@ export default function RightsIssuePanel({ symbol }: Props) {
                   <text x={rightChart.curX + 6} y={rightChart.curDY - 4} className="mkwz-lbl">d {fmtNum(rightChart.curD, 2)}</text>
                   <text x={rightChart.m.l} y={rightChart.H - 4} className="mkwz-axis">0</text>
                   <text x={rightChart.W - rightChart.m.r} y={rightChart.H - 4} className="mkwz-axis" textAnchor="end">{fmtNum(rightChart.xMax, 1)}</text>
-                  <text x={rightChart.m.l + 4} y={rightChart.m.t + 9} className="mkwz-axis" fill="var(--amber)">d (RIGHT)</text>
+                  <text x={rightChart.m.l + 4} y={rightChart.m.t + 9} className="mkwz-axis" fill="var(--amber)">{t("rgt.legendRight")}</text>
                   <text x={rightChart.m.l + 4} y={rightChart.m.t + 20} className="mkwz-axis" fill="var(--cyan)">P_to</text>
                 </svg>
               </>

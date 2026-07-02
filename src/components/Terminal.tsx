@@ -389,6 +389,15 @@ export default function Terminal() {
     [loadSecurity, notify, symbol, t]
   );
 
+  // ----- deep link: ?cmd=AAPL%20CAPM runs the command once on mount -----
+  const bootedRef = useRef(false);
+  useEffect(() => {
+    if (bootedRef.current) return;
+    bootedRef.current = true;
+    const cmd = new URLSearchParams(window.location.search).get("cmd");
+    if (cmd) handleCommand(cmd);
+  }, [handleCommand]);
+
   // keep the active category in sync with the open panel (so the bar follows
   // navigation from the command line / watchlist, not just clicks)
   useEffect(() => {

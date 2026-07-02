@@ -251,7 +251,7 @@ export default function MarkowitzPanel({ symbols }: Props) {
                 <text x={plot.W / 2} y={plot.H - 4} className="mkwz-axis" textAnchor="middle">
                   {t("mkwz.axisRisk")}
                 </text>
-                <text x={14} y={plot.m.t + 6} className="mkwz-axis">
+                <text x={plot.m.l - 6} y={plot.m.t - 6} className="mkwz-axis" textAnchor="end">
                   E(R)
                 </text>
 

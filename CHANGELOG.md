@@ -1,6 +1,13 @@
 # Changelog
 
-## [2026-06-30] — i18n: internazionalizzato il title di ThemeToggle
+## [2026-07-02] — Rifiniture pre-orale: robustezza dati, deep-link, fix visivi
+Preparazione alla demo dell'orale ASF (settimana prossima). Obiettivo: l'app non deve rompersi né mostrare incoerenze davanti ai professori.
+- **Stale-if-error**: `yahooFetch` ora conserva in memoria l'ultima risposta buona per path e la serve (fino a 24h, header `x-stale: 1`) quando entrambi gli host Yahoo falliscono — un 429 dagli IP Vercel a metà demo non rompe più i pannelli. Stesso pattern inline in `/api/crypto` (CoinGecko free 429-a facilmente). Copre quote, history, search, fundamentals, crypto
+- **Deep-link**: `?cmd=AAPL CAPM` esegue il comando al mount (`Terminal.tsx`), `?lang=it|en` forza la lingua (`i18n.tsx`), `?theme=dark|light` forza il tema persistendolo (script anti-flash in `layout.tsx`). Usi: bookmark dei passi della demo + screenshot QA headless
+- **Quote coerente su tutti i range**: su range ≠ 1d il `chartPreviousClose` di Yahoo è la chiusura precedente all'*inizio del range* → il pannello TITOLO mostrava +8,28% mentre la watchlist diceva +1,73%. `/api/history` ora prende la quote sempre dal chart 1d (fetch parallelo, cache 30s)
+- **Fix hydration warning**: `suppressHydrationWarning` su `<html>` (lo script anti-flash riscrive `data-theme` pre-hydration) — spariti il warning console e il badge "1 Issue" del dev overlay
+- **QA visiva completa** dei 14 pannelli in italiano/tema scuro via deep-link + Chrome headless. Fix emersi: etichetta E(R) sovrapposta al tick massimo dell'asse (CAPM SML + Markowitz → spostata sopra l'asse); tick della curva Treasury accavallati sul tratto breve (skip anti-collisione ≥30px in `BondPanel`, label "1.5 Month"→"1.5MO" nella route); legenda "d (RIGHT)" hardcoded in RGT → chiave i18n `rgt.legendRight` ("d (DIRITTO)" in it)
+
 - Ultimo testo UI hardcoded rimasto fuori dall'i18n: il `title` del `ThemeToggle` ("Theme: AUTO → DARK → LIGHT") ora passa da `t("header.theme")` (nuova chiave `header.theme` in EN/IT)
 - Verifica completezza i18n: tutti i componenti usano `t()`, parità chiavi EN/IT (198 per ramo, nessun mismatch), build verde. Restano neutri di proposito solo il `title` di `LanguageToggle` (bilingue EN↔IT per design) e i token finanziari/formule
 

@@ -33,8 +33,13 @@ function resolve(lang: Lang, key: string): unknown {
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en");
 
-  // resolve the real language on the client: stored override, else browser language
+  // resolve the real language on the client: URL param, else stored override, else browser language
   useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get("lang");
+    if (fromUrl === "it" || fromUrl === "en") {
+      setLangState(fromUrl);
+      return;
+    }
     const stored = localStorage.getItem(LANG_KEY);
     if (stored === "it" || stored === "en") {
       setLangState(stored);

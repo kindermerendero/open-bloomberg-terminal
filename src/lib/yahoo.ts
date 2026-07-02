@@ -10,14 +10,34 @@ const HEADERS = {
 // query1 is aggressively rate-limited (429) from some networks; query2 serves the same API
 const HOSTS = ["https://query2.finance.yahoo.com", "https://query1.finance.yahoo.com"];
 
+// Stale-if-error: last good body per path, served when every host fails (429 mid-demo).
+// In-memory only — survives on a warm serverless instance, which is the demo scenario.
+const STALE_MAX_MS = 24 * 3600 * 1000;
+const staleCache = new Map<string, { at: number; body: string }>();
+
 export async function yahooFetch(path: string): Promise<Response> {
   let last: Response | null = null;
   for (const host of HOSTS) {
-    const res = await fetch(`${host}${path}`, { headers: HEADERS, next: { revalidate: 30 } });
-    if (res.ok) return res;
-    last = res;
+    try {
+      const res = await fetch(`${host}${path}`, { headers: HEADERS, next: { revalidate: 30 } });
+      if (res.ok) {
+        const body = await res.text();
+        staleCache.set(path, { at: Date.now(), body });
+        return new Response(body, { status: 200, headers: { "content-type": "application/json" } });
+      }
+      last = res;
+    } catch {
+      // network error → try next host
+    }
   }
-  return last!;
+  const stale = staleCache.get(path);
+  if (stale && Date.now() - stale.at < STALE_MAX_MS) {
+    return new Response(stale.body, {
+      status: 200,
+      headers: { "content-type": "application/json", "x-stale": "1" },
+    });
+  }
+  return last ?? new Response(JSON.stringify({ error: "upstream unreachable" }), { status: 502 });
 }
 
 const RANGE_INTERVAL: Record<ChartRange, string> = {

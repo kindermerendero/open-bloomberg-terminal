@@ -152,7 +152,17 @@ export default function BondPanel() {
     const sy = (v: number) => H - m.b - ((v - yMin) / (yMax - yMin)) * (H - m.t - m.b);
     const path = (pts: CurvePoint[]) =>
       pts.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.years)},${sy(p.yield)}`).join(" ");
-    return { W, H, m, sx, sy, yMin, yMax, path };
+    // drop tick labels that would collide at the crowded short end (log scale)
+    const ticks = new Set<string>();
+    let lastX = -Infinity;
+    for (const p of curve.points) {
+      const x = sx(p.years);
+      if (x - lastX >= 30) {
+        ticks.add(p.label);
+        lastX = x;
+      }
+    }
+    return { W, H, m, sx, sy, yMin, yMax, path, ticks };
   }, [curve, cmpM1, cmpY1]);
 
   // ----- spread-history sparkline -----
@@ -288,9 +298,11 @@ export default function BondPanel() {
               {curve.points.map((p) => (
                 <g key={p.label}>
                   <circle cx={plot.sx(p.years)} cy={plot.sy(p.yield)} r={2.5} fill="var(--yellow)" />
-                  <text x={plot.sx(p.years)} y={plot.H - plot.m.b + 14} className="mkwz-tick" textAnchor="middle">
-                    {p.label}
-                  </text>
+                  {plot.ticks.has(p.label) && (
+                    <text x={plot.sx(p.years)} y={plot.H - plot.m.b + 14} className="mkwz-tick" textAnchor="middle">
+                      {p.label}
+                    </text>
+                  )}
                 </g>
               ))}
             </svg>
