@@ -60,6 +60,7 @@ export interface CapmStats {
   erMarket: number;
   erCapm: number;
   sharpe: number;
+  treynor: number;
   rf: number;
   n: number;
 }
@@ -90,6 +91,8 @@ export function capmStats(
   const alphaAnn = annA - rf - beta * (annB - rf);
   const erCapm = rf + beta * (annB - rf);
   const sharpe = volAsset > 0 ? (annA - rf) / volAsset : 0;
+  // Treynor: excess return per unit of systematic (β) risk, vs Sharpe's total (σ) risk
+  const treynor = beta !== 0 ? (annA - rf) / beta : 0;
 
   return {
     beta,
@@ -101,6 +104,7 @@ export function capmStats(
     erMarket: annB,
     erCapm,
     sharpe,
+    treynor,
     rf,
     n: ra.length,
   };
@@ -623,6 +627,26 @@ export function bondAnalytics(
     convexity,
     currentYield: (face * couponRate) / price,
   };
+}
+
+// Implied forward rates between adjacent tenors of a spot curve (yields in %):
+// (1+s₂)^t₂ = (1+s₁)^t₁ · (1+f)^(t₂−t₁). Expectations theory reads f as the
+// expected future short rate (plus any liquidity premium). Each forward is
+// plotted at the end of its interval (t₂).
+export function impliedForwards(
+  points: Array<{ years: number; yield: number }>
+): Array<{ years: number; yield: number }> {
+  const pts = [...points].sort((a, b) => a.years - b.years);
+  const out: Array<{ years: number; yield: number }> = [];
+  for (let i = 1; i < pts.length; i++) {
+    const t1 = pts[i - 1].years;
+    const t2 = pts[i].years;
+    const s1 = pts[i - 1].yield / 100;
+    const s2 = pts[i].yield / 100;
+    const f = Math.pow(Math.pow(1 + s2, t2) / Math.pow(1 + s1, t1), 1 / (t2 - t1)) - 1;
+    out.push({ years: t2, yield: f * 100 });
+  }
+  return out;
 }
 
 // =====================================================================

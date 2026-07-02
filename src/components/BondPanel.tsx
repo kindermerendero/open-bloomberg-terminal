@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { bondAnalytics, bondYTM } from "@/lib/quant";
+import { bondAnalytics, bondYTM, impliedForwards } from "@/lib/quant";
 import { fmtNum, fmtPct } from "@/lib/format";
 import { useLang } from "@/lib/i18n";
 
@@ -43,6 +43,7 @@ export default function BondPanel() {
   const [selIdx, setSelIdx] = useState(0); // 0 = latest curve
   const [showM1, setShowM1] = useState(false);
   const [showY1, setShowY1] = useState(false);
+  const [showFwd, setShowFwd] = useState(false);
   const [playing, setPlaying] = useState(false);
 
   // bond calculator inputs
@@ -120,6 +121,11 @@ export default function BondPanel() {
     [showY1, curve, curves]
   );
 
+  const fwd = useMemo(
+    () => (showFwd && curve && curve.points.length >= 2 ? impliedForwards(curve.points) : null),
+    [showFwd, curve]
+  );
+
   const spread10_2 = useMemo(() => {
     if (!curve) return null;
     const y2 = curve.points.find((p) => p.years === 2)?.yield;
@@ -143,14 +149,14 @@ export default function BondPanel() {
     const shown = [curve, cmpM1, cmpY1].filter((c): c is DatedCurve => c != null);
     const all = shown.flatMap((c) => c.points);
     const xs = all.map((p) => Math.log(p.years));
-    const ys = all.map((p) => p.yield);
+    const ys = [...all.map((p) => p.yield), ...(fwd?.map((p) => p.yield) ?? [])];
     const xMin = Math.min(...xs);
     const xMax = Math.max(...xs);
     const yMin = Math.min(...ys) - 0.2;
     const yMax = Math.max(...ys) + 0.2;
     const sx = (yr: number) => m.l + ((Math.log(yr) - xMin) / (xMax - xMin)) * (W - m.l - m.r);
     const sy = (v: number) => H - m.b - ((v - yMin) / (yMax - yMin)) * (H - m.t - m.b);
-    const path = (pts: CurvePoint[]) =>
+    const path = (pts: Array<{ years: number; yield: number }>) =>
       pts.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.years)},${sy(p.yield)}`).join(" ");
     // drop tick labels that would collide at the crowded short end (log scale)
     const ticks = new Set<string>();
@@ -163,7 +169,7 @@ export default function BondPanel() {
       }
     }
     return { W, H, m, sx, sy, yMin, yMax, path, ticks };
-  }, [curve, cmpM1, cmpY1]);
+  }, [curve, cmpM1, cmpY1, fwd]);
 
   // ----- spread-history sparkline -----
   const spark = useMemo(() => {
@@ -237,6 +243,14 @@ export default function BondPanel() {
           </div>
         </label>
         <label>
+          {t("bond.fwd")}
+          <div className="seg">
+            <button className={showFwd ? "active" : ""} onClick={() => setShowFwd((v) => !v)}>
+              {t("bond.fwdBtn")}
+            </button>
+          </div>
+        </label>
+        <label>
           {t("bond.playback")}
           <div className="seg">
             <button className={playing ? "active" : ""} onClick={() => setPlaying((v) => !v)}>
@@ -276,6 +290,12 @@ export default function BondPanel() {
                     <i style={{ background: "var(--text-dim)" }} /> {cmpY1.date}
                   </>
                 )}
+                {fwd && (
+                  <>
+                    {" "}
+                    <i style={{ background: "var(--up)" }} /> {t("bond.fwdLegend")}
+                  </>
+                )}
               </span>
             </div>
 
@@ -293,6 +313,15 @@ export default function BondPanel() {
               {/* comparison overlays (drawn under the latest curve) */}
               {cmpY1 && <path d={plot.path(cmpY1.points)} fill="none" stroke="var(--text-dim)" strokeWidth={1.2} strokeDasharray="3 3" />}
               {cmpM1 && <path d={plot.path(cmpM1.points)} fill="none" stroke="var(--cyan)" strokeWidth={1.2} strokeDasharray="4 2" />}
+              {/* implied forward curve (expectations theory) */}
+              {fwd && (
+                <>
+                  <path d={plot.path(fwd)} fill="none" stroke="var(--up)" strokeWidth={1.4} strokeDasharray="5 3" />
+                  {fwd.map((p, i) => (
+                    <circle key={`fw-${i}`} cx={plot.sx(p.years)} cy={plot.sy(p.yield)} r={2} fill="var(--up)" />
+                  ))}
+                </>
+              )}
               {/* selected curve */}
               <path d={plot.path(curve.points)} fill="none" stroke="var(--amber)" strokeWidth={1.8} />
               {curve.points.map((p) => (
@@ -306,6 +335,12 @@ export default function BondPanel() {
                 </g>
               ))}
             </svg>
+
+            {fwd && (
+              <p className="note" style={{ padding: "0 10px 4px" }}>
+                {t("bond.fwdHint")}
+              </p>
+            )}
 
             {/* date scrubber */}
             <div className="ts-scrub">

@@ -198,6 +198,10 @@ export default function CapmPanel({ symbol, quote }: Props) {
                 <span className="v">{fmtNum(stats.sharpe, 2)}</span>
               </div>
               <div className="cell">
+                <span className="k">{t("capm.treynor")}</span>
+                <span className={`v ${signClass(stats.treynor)}`}>{fmtPct(stats.treynor * 100)}</span>
+              </div>
+              <div className="cell">
                 <span className="k">{t("capm.obs")}</span>
                 <span className="v">{stats.n}</span>
               </div>

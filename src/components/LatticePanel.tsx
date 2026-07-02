@@ -102,6 +102,21 @@ export default function LatticePanel({ symbol, quote }: Props) {
         : null,
     [params]
   );
+  // opposite-type price at N=500 for the put-call parity check
+  const fineOpp = useMemo(
+    () =>
+      params
+        ? binomialPrice({ ...params, type: params.type === "call" ? "put" : "call", steps: 500 })
+        : null,
+    [params]
+  );
+  const parity = useMemo(() => {
+    if (!params || !fine || !fineOpp) return null;
+    const C = params.type === "call" ? fine.price : fineOpp.price;
+    const P = params.type === "call" ? fineOpp.price : fine.price;
+    const rhs = params.S0 - params.K * Math.exp(-params.r * params.T);
+    return { lhs: C - P, rhs, gap: C - P - rhs };
+  }, [params, fine, fineOpp]);
 
   if (!symbol || !quote) {
     return (
@@ -229,6 +244,30 @@ export default function LatticePanel({ symbol, quote }: Props) {
                 <span className="v">{fmtNum(result.dt, 5)}</span>
               </div>
             </div>
+            {parity && (
+              <>
+                <div className="panel-title" style={{ marginTop: 8 }}>
+                  {t("ov.parityTitle")}
+                  <span className="sub">{exercise === "am" ? t("ov.paritySubAm") : t("ov.paritySubEu")}</span>
+                </div>
+                <div className="quote-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+                  <div className="cell">
+                    <span className="k">C − P (N=500)</span>
+                    <span className="v">{fmtNum(parity.lhs, 4)}</span>
+                  </div>
+                  <div className="cell">
+                    <span className="k">S − K·e^(−rT)</span>
+                    <span className="v">{fmtNum(parity.rhs, 4)}</span>
+                  </div>
+                  <div className="cell">
+                    <span className="k">{t("ov.parityGap")}</span>
+                    <span className={`v ${Math.abs(parity.gap) < 0.02 ? "up" : "down"}`}>
+                      {fmtNum(parity.gap, 4)}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
             {result.lattice && (
               <div className="lattice-scroll">
                 <svg width={width} height={height} className="lattice-svg">

@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-07-02] — Tre agganci teorici per l'orale: forward impliciti, put-call parity, Treynor
+Contenuti aggiunti in vista delle probabili domande del modulo Tiburzi:
+- **Forward impliciti (BOND)**: toggle FWD IMPLICITI sovrappone alla curva spot i forward tra tenor adiacenti — `impliedForwards` in `quant.ts`: (1+s₂)^t₂ = (1+s₁)^t₁·(1+f)^Δt, plottati a t₂. Tratteggio verde + hint sulla teoria delle aspettative (f = tasso breve futuro atteso + premio per la liquidità); nota che i par yield US sono trattati come spot (approssimazione), la curva BCE è spot vera. Verificato: curva piatta → forward piatti; 4%→4,5% → f=5,0024%
+- **Put-call parity (OV)**: nuovo blocco C−P (N=500) vs S−K·e^(−rT) con GAP. Su europee il gap è 0 (verificato: 4,7873 = 4,7873); su americane il gap negativo = premio di esercizio anticipato della put (−0,49 sul caso AAPL default) — il sottotitolo lo spiega. GAP verde se |gap|<0,02, rosso altrimenti
+- **Treynor (CAPM)**: cella TREYNOR (Rᴀ−rf)/β accanto allo Sharpe — rischio sistematico vs rischio totale, campo `treynor` in `CapmStats`
+- i18n completo EN/IT per tutte le nuove label
+
 ## [2026-07-02] — Rifiniture pre-orale: robustezza dati, deep-link, fix visivi
 Preparazione alla demo dell'orale ASF (settimana prossima). Obiettivo: l'app non deve rompersi né mostrare incoerenze davanti ai professori.
 - **Stale-if-error**: `yahooFetch` ora conserva in memoria l'ultima risposta buona per path e la serve (fino a 24h, header `x-stale: 1`) quando entrambi gli host Yahoo falliscono — un 429 dagli IP Vercel a metà demo non rompe più i pannelli. Stesso pattern inline in `/api/crypto` (CoinGecko free 429-a facilmente). Copre quote, history, search, fundamentals, crypto
